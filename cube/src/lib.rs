@@ -1,3 +1,4 @@
+mod alg;
 mod corner_pos;
 mod edge_pos;
 mod sticker_cube;
@@ -8,7 +9,7 @@ pub use sticker_cube::StickerCube;
 
 /// Represents a face of a cube.
 #[derive(Clone, Copy, Debug)]
-enum Face {
+pub enum Face {
   U,
   R,
   F,

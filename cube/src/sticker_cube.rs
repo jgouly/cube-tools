@@ -1,6 +1,7 @@
+use crate::alg::{Amount, Direction, Move};
 use crate::{CentrePos, CornerPos, EdgePos, Face};
 use std::convert::TryFrom;
-use std::ops::Index;
+use std::ops::{Index, IndexMut};
 
 /// Abstract stickers on a [StickerCube].
 #[derive(Clone, Copy, Debug, PartialEq)]
@@ -17,6 +18,8 @@ pub enum Sticker {
 ///
 /// This representation includes centre pieces so it can
 /// represent slice turns and rotations.
+#[derive(Debug)]
+#[cfg_attr(test, derive(PartialEq))]
 pub struct StickerCube {
   centres: [Sticker; 6],
   corners: [Sticker; 24],
@@ -104,6 +107,56 @@ impl StickerCube {
       _ => unreachable!("{:?}", s),
     }
   }
+
+  /// Apply a move.
+  pub fn do_move_mut(&mut self, m: Move) {
+    match m {
+      Move::Face(f, amt, dir) => {
+        let amt = match (amt, dir) {
+          (Amount::Single, Direction::Clockwise) => 1,
+          (Amount::Single, Direction::AntiClockwise) => 3,
+          (Amount::Double, _) => 2,
+        };
+
+        for _ in 0..amt {
+          match f {
+            Face::U => self.do_u(),
+            Face::R => unimplemented!(),
+            Face::F => unimplemented!(),
+            Face::D => unimplemented!(),
+            Face::B => unimplemented!(),
+            Face::L => unimplemented!(),
+          }
+        }
+      }
+    }
+  }
+
+  fn do_u(&mut self) {
+    use EdgePos::*;
+    cycle4(UF, UL, UB, UR, self);
+    cycle4(FU, LU, BU, RU, self);
+
+    use CornerPos::*;
+    cycle4(URF, UFL, ULB, UBR, self);
+    cycle4(RFU, FLU, LBU, BRU, self);
+    cycle4(FUR, LUF, BUL, RUB, self);
+  }
+}
+
+fn cycle4<T>(p0: T, p1: T, p2: T, p3: T, cube: &mut StickerCube)
+where
+  T: Copy,
+  StickerCube: IndexMut<T, Output = Sticker>,
+{
+  let op0 = cube[p0];
+  let op1 = cube[p1];
+  let op2 = cube[p2];
+  let op3 = cube[p3];
+  cube[p0] = op3;
+  cube[p1] = op0;
+  cube[p2] = op1;
+  cube[p3] = op2;
 }
 
 macro_rules! pos_index {
@@ -113,6 +166,12 @@ macro_rules! pos_index {
 
       fn index(&self, edge: $ty) -> &Self::Output {
         &self.$field[edge as usize]
+      }
+    }
+
+    impl IndexMut<$ty> for StickerCube {
+      fn index_mut(&mut self, edge: $ty) -> &mut Self::Output {
+        &mut self.$field[edge as usize]
       }
     }
   };
@@ -125,6 +184,7 @@ pos_index!(CornerPos, corners);
 #[cfg(test)]
 mod tests {
   use super::*;
+  use {CornerPos::*, EdgePos::*, Sticker::*};
 
   #[test]
   fn is_solved() {
@@ -148,5 +208,101 @@ mod tests {
     for c in CornerPos::iter() {
       assert_eq!(c, cu.corner(c));
     }
+  }
+
+  #[test]
+  fn face_u() {
+    let u = Move::Face(Face::U, Amount::Single, Direction::Clockwise);
+    let mut c = StickerCube::solved();
+    c.do_move_mut(u);
+
+    assert_eq!(UR, c.edge(UF));
+    assert_eq!(UF, c.edge(UL));
+    assert_eq!(UL, c.edge(UB));
+    assert_eq!(UB, c.edge(UR));
+
+    assert_eq!(UBR, c.corner(URF));
+    assert_eq!(URF, c.corner(UFL));
+    assert_eq!(UFL, c.corner(ULB));
+    assert_eq!(ULB, c.corner(UBR));
+
+    assert_eq!(
+      StickerCube {
+        centres: [S0, S1, S2, S3, S4, S5],
+        corners: [
+          S0, S4, S1, S0, S1, S2, S0, S2, S5, S0, S5, S4, S3, S2, S1, S3, S5,
+          S2, S3, S4, S5, S3, S1, S4
+        ],
+        edges: [
+          S0, S1, S0, S2, S0, S5, S0, S4, S3, S2, S3, S5, S3, S4, S3, S1, S2,
+          S1, S2, S5, S4, S5, S4, S1
+        ]
+      },
+      c
+    );
+  }
+
+  #[test]
+  fn face_uprime() {
+    let uprime = Move::Face(Face::U, Amount::Single, Direction::AntiClockwise);
+    let mut c = StickerCube::solved();
+    c.do_move_mut(uprime);
+
+    assert_eq!(UL, c.edge(UF));
+    assert_eq!(UB, c.edge(UL));
+    assert_eq!(UR, c.edge(UB));
+    assert_eq!(UF, c.edge(UR));
+
+    assert_eq!(UFL, c.corner(URF));
+    assert_eq!(ULB, c.corner(UFL));
+    assert_eq!(UBR, c.corner(ULB));
+    assert_eq!(URF, c.corner(UBR));
+
+    assert_eq!(
+      StickerCube {
+        centres: [S0, S1, S2, S3, S4, S5],
+        corners: [
+          S0, S2, S5, S0, S5, S4, S0, S4, S1, S0, S1, S2, S3, S2, S1, S3, S5,
+          S2, S3, S4, S5, S3, S1, S4
+        ],
+        edges: [
+          S0, S5, S0, S4, S0, S1, S0, S2, S3, S2, S3, S5, S3, S4, S3, S1, S2,
+          S1, S2, S5, S4, S5, S4, S1
+        ]
+      },
+      c
+    );
+  }
+
+  #[test]
+  fn face_u2() {
+    let u2 = Move::Face(Face::U, Amount::Double, Direction::Clockwise);
+    let mut c = StickerCube::solved();
+    c.do_move_mut(u2);
+
+    assert_eq!(UB, c.edge(UF));
+    assert_eq!(UR, c.edge(UL));
+    assert_eq!(UF, c.edge(UB));
+    assert_eq!(UL, c.edge(UR));
+
+    assert_eq!(ULB, c.corner(URF));
+    assert_eq!(UBR, c.corner(UFL));
+    assert_eq!(URF, c.corner(ULB));
+    assert_eq!(UFL, c.corner(UBR));
+
+    assert_eq!(
+      StickerCube {
+        centres: [S0, S1, S2, S3, S4, S5],
+        corners: [
+          S0, S5, S4, S0, S4, S1, S0, S1, S2, S0, S2, S5, S3, S2, S1, S3, S5,
+          S2, S3, S4, S5, S3, S1, S4
+        ],
+        edges: [
+          S0, S4, S0, S1, S0, S2, S0, S5, S3, S2, S3, S5, S3, S4, S3, S1, S2,
+          S1, S2, S5, S4, S5, S4, S1
+        ]
+      },
+      c
+    );
   }
 }
