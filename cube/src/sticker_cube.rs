@@ -123,7 +123,7 @@ impl StickerCube {
             Face::U => self.do_u(),
             Face::R => unimplemented!(),
             Face::F => unimplemented!(),
-            Face::D => unimplemented!(),
+            Face::D => self.do_d(),
             Face::B => unimplemented!(),
             Face::L => unimplemented!(),
           }
@@ -141,6 +141,17 @@ impl StickerCube {
     cycle4(URF, UFL, ULB, UBR, self);
     cycle4(RFU, FLU, LBU, BRU, self);
     cycle4(FUR, LUF, BUL, RUB, self);
+  }
+
+  fn do_d(&mut self) {
+    use EdgePos::*;
+    cycle4(DF, DR, DB, DL, self);
+    cycle4(FD, RD, BD, LD, self);
+
+    use CornerPos::*;
+    cycle4(DFR, DRB, DBL, DLF, self);
+    cycle4(FRD, RBD, BLD, LFD, self);
+    cycle4(RDF, BDR, LDB, FDL, self);
   }
 }
 
@@ -299,6 +310,102 @@ mod tests {
         ],
         edges: [
           S0, S4, S0, S1, S0, S2, S0, S5, S3, S2, S3, S5, S3, S4, S3, S1, S2,
+          S1, S2, S5, S4, S5, S4, S1
+        ]
+      },
+      c
+    );
+  }
+
+  #[test]
+  fn face_d() {
+    let d = Move::Face(Face::D, Amount::Single, Direction::Clockwise);
+    let mut c = StickerCube::solved();
+    c.do_move_mut(d);
+
+    assert_eq!(DL, c.edge(DF));
+    assert_eq!(DB, c.edge(DL));
+    assert_eq!(DR, c.edge(DB));
+    assert_eq!(DF, c.edge(DR));
+
+    assert_eq!(DLF, c.corner(DFR));
+    assert_eq!(DBL, c.corner(DLF));
+    assert_eq!(DRB, c.corner(DBL));
+    assert_eq!(DFR, c.corner(DRB));
+
+    assert_eq!(
+      StickerCube {
+        centres: [S0, S1, S2, S3, S4, S5],
+        corners: [
+          S0, S1, S2, S0, S2, S5, S0, S5, S4, S0, S4, S1, S3, S5, S2, S3, S4,
+          S5, S3, S1, S4, S3, S2, S1
+        ],
+        edges: [
+          S0, S2, S0, S5, S0, S4, S0, S1, S3, S5, S3, S4, S3, S1, S3, S2, S2,
+          S1, S2, S5, S4, S5, S4, S1
+        ]
+      },
+      c
+    );
+  }
+
+  #[test]
+  fn face_dprime() {
+    let dprime = Move::Face(Face::D, Amount::Single, Direction::AntiClockwise);
+    let mut c = StickerCube::solved();
+    c.do_move_mut(dprime);
+
+    assert_eq!(DR, c.edge(DF));
+    assert_eq!(DF, c.edge(DL));
+    assert_eq!(DL, c.edge(DB));
+    assert_eq!(DB, c.edge(DR));
+
+    assert_eq!(DRB, c.corner(DFR));
+    assert_eq!(DFR, c.corner(DLF));
+    assert_eq!(DLF, c.corner(DBL));
+    assert_eq!(DBL, c.corner(DRB));
+
+    assert_eq!(
+      StickerCube {
+        centres: [S0, S1, S2, S3, S4, S5],
+        corners: [
+          S0, S1, S2, S0, S2, S5, S0, S5, S4, S0, S4, S1, S3, S1, S4, S3, S2,
+          S1, S3, S5, S2, S3, S4, S5
+        ],
+        edges: [
+          S0, S2, S0, S5, S0, S4, S0, S1, S3, S1, S3, S2, S3, S5, S3, S4, S2,
+          S1, S2, S5, S4, S5, S4, S1
+        ]
+      },
+      c
+    );
+  }
+
+  #[test]
+  fn face_d2() {
+    let d2 = Move::Face(Face::D, Amount::Double, Direction::Clockwise);
+    let mut c = StickerCube::solved();
+    c.do_move_mut(d2);
+
+    assert_eq!(DB, c.edge(DF));
+    assert_eq!(DR, c.edge(DL));
+    assert_eq!(DF, c.edge(DB));
+    assert_eq!(DL, c.edge(DR));
+
+    assert_eq!(DBL, c.corner(DFR));
+    assert_eq!(DRB, c.corner(DLF));
+    assert_eq!(DFR, c.corner(DBL));
+    assert_eq!(DLF, c.corner(DRB));
+
+    assert_eq!(
+      StickerCube {
+        centres: [S0, S1, S2, S3, S4, S5],
+        corners: [
+          S0, S1, S2, S0, S2, S5, S0, S5, S4, S0, S4, S1, S3, S4, S5, S3, S1,
+          S4, S3, S2, S1, S3, S5, S2
+        ],
+        edges: [
+          S0, S2, S0, S5, S0, S4, S0, S1, S3, S4, S3, S1, S3, S2, S3, S5, S2,
           S1, S2, S5, S4, S5, S4, S1
         ]
       },
