@@ -109,6 +109,10 @@ impl Alg {
     }
     Alg::Seq(moves)
   }
+
+  pub fn iter(&self) -> impl Iterator<Item = Move> {
+    self.expand().seq_as_vec().into_iter()
+  }
 }
 
 impl std::fmt::Display for Alg {
