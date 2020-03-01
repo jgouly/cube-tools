@@ -41,6 +41,13 @@ impl CornerPos {
     CORNERS.iter().copied()
   }
 
+  /// An [Iterator] over the oriented [CornerPos] variants in order.
+  pub fn oriented_iter() -> impl Iterator<Item = CornerPos> {
+    use CornerPos::*;
+    static CORNERS: [CornerPos; 8] = [URF, UFL, ULB, UBR, DFR, DLF, DBL, DRB];
+    CORNERS.iter().copied()
+  }
+
   /// The corner position clockwise.
   pub fn clockwise_pos(self) -> Self {
     let (a, b, c) = self.into();
@@ -51,6 +58,35 @@ impl CornerPos {
   pub fn anti_clockwise_pos(self) -> Self {
     let (a, b, c) = self.into();
     Self::try_from((c, a, b)).unwrap()
+  }
+
+  pub fn orient(self) -> Self {
+    match self {
+      CornerPos::URF => CornerPos::URF,
+      CornerPos::RFU => CornerPos::URF,
+      CornerPos::FUR => CornerPos::URF,
+      CornerPos::UFL => CornerPos::UFL,
+      CornerPos::FLU => CornerPos::UFL,
+      CornerPos::LUF => CornerPos::UFL,
+      CornerPos::ULB => CornerPos::ULB,
+      CornerPos::LBU => CornerPos::ULB,
+      CornerPos::BUL => CornerPos::ULB,
+      CornerPos::UBR => CornerPos::UBR,
+      CornerPos::BRU => CornerPos::UBR,
+      CornerPos::RUB => CornerPos::UBR,
+      CornerPos::DFR => CornerPos::DFR,
+      CornerPos::FRD => CornerPos::DFR,
+      CornerPos::RDF => CornerPos::DFR,
+      CornerPos::DLF => CornerPos::DLF,
+      CornerPos::LFD => CornerPos::DLF,
+      CornerPos::FDL => CornerPos::DLF,
+      CornerPos::DBL => CornerPos::DBL,
+      CornerPos::BLD => CornerPos::DBL,
+      CornerPos::LDB => CornerPos::DBL,
+      CornerPos::DRB => CornerPos::DRB,
+      CornerPos::RBD => CornerPos::DRB,
+      CornerPos::BDR => CornerPos::DRB,
+    }
   }
 }
 
@@ -146,6 +182,17 @@ mod tests {
       let (f0, f1, f2) = c0.into();
       let c1 = CornerPos::try_from((f0, f1, f2)).unwrap();
       assert_eq!(c1, c0);
+    }
+  }
+
+  #[test]
+  fn exhaustive_corner_orient() {
+    for (c0, c1) in CornerPos::oriented_iter()
+      .flat_map(|c| std::iter::repeat(c).take(3))
+      .zip(CornerPos::iter())
+    {
+      assert_eq!(c0, c0.orient());
+      assert_eq!(c0, c1.orient());
     }
   }
 }

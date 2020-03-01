@@ -41,6 +41,14 @@ impl EdgePos {
     EDGES.iter().copied()
   }
 
+  /// An [Iterator] over the oriented [EdgePos] variants in order.
+  pub fn oriented_iter() -> impl Iterator<Item = EdgePos> {
+    use EdgePos::*;
+    static EDGES: [EdgePos; 12] =
+      [UF, UL, UB, UR, DF, DL, DB, DR, FR, FL, BL, BR];
+    EDGES.iter().copied()
+  }
+
   pub fn flip(self) -> Self {
     match self {
       Self::UF => Self::FU,
@@ -66,6 +74,35 @@ impl EdgePos {
       Self::BL => Self::LB,
       Self::LB => Self::BL,
       Self::BR => Self::RB,
+      Self::RB => Self::BR,
+    }
+  }
+
+  pub fn orient(self) -> Self {
+    match self {
+      Self::UF => Self::UF,
+      Self::FU => Self::UF,
+      Self::UL => Self::UL,
+      Self::LU => Self::UL,
+      Self::UB => Self::UB,
+      Self::BU => Self::UB,
+      Self::UR => Self::UR,
+      Self::RU => Self::UR,
+      Self::DF => Self::DF,
+      Self::FD => Self::DF,
+      Self::DL => Self::DL,
+      Self::LD => Self::DL,
+      Self::DB => Self::DB,
+      Self::BD => Self::DB,
+      Self::DR => Self::DR,
+      Self::RD => Self::DR,
+      Self::FR => Self::FR,
+      Self::RF => Self::FR,
+      Self::FL => Self::FL,
+      Self::LF => Self::FL,
+      Self::BL => Self::BL,
+      Self::LB => Self::BL,
+      Self::BR => Self::BR,
       Self::RB => Self::BR,
     }
   }
@@ -126,5 +163,16 @@ mod tests {
     assert_eq!(Ok(EdgePos::FU), EdgePos::try_from((Face::F, Face::U)));
     assert_eq!(Err(()), EdgePos::try_from((Face::U, Face::U)));
     assert_eq!(Err(()), EdgePos::try_from((Face::D, Face::U)));
+  }
+
+  #[test]
+  fn exhaustive_edge_orient() {
+    for (e0, e1) in EdgePos::oriented_iter()
+      .flat_map(|c| std::iter::repeat(c).take(2))
+      .zip(EdgePos::iter())
+    {
+      assert_eq!(e0, e0.orient());
+      assert_eq!(e0, e1.orient());
+    }
   }
 }
