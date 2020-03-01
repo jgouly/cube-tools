@@ -25,3 +25,12 @@ pub enum Direction {
 pub enum Move {
   Face(Face, Amount, Direction),
 }
+
+#[derive(Clone, Debug)]
+#[cfg_attr(test, derive(PartialEq))]
+pub enum Alg {
+  None,
+  Seq(Vec<Move>),
+  Comm(Box<Alg>, Box<Alg>),
+  Conj(Box<Alg>, Box<Alg>),
+}
