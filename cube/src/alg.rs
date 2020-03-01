@@ -11,6 +11,15 @@ pub enum Amount {
   Double,
 }
 
+impl std::fmt::Display for Amount {
+  fn fmt(&self, f: &mut std::fmt::Formatter) -> std::fmt::Result {
+    match self {
+      Amount::Single => Ok(()),
+      Amount::Double => write!(f, "2"),
+    }
+  }
+}
+
 /// The direction of a move.
 #[derive(Clone, Copy, Debug)]
 #[cfg_attr(test, derive(PartialEq))]
@@ -28,6 +37,15 @@ impl Direction {
   }
 }
 
+impl std::fmt::Display for Direction {
+  fn fmt(&self, f: &mut std::fmt::Formatter) -> std::fmt::Result {
+    match self {
+      Direction::Clockwise => Ok(()),
+      Direction::AntiClockwise => write!(f, "'"),
+    }
+  }
+}
+
 /// Represents a move of the cube.
 #[derive(Clone, Debug)]
 #[cfg_attr(test, derive(PartialEq))]
@@ -39,6 +57,14 @@ impl Move {
   fn invert(&self) -> Move {
     match self {
       Move::Face(f, amt, dir) => Move::Face(*f, *amt, dir.invert()),
+    }
+  }
+}
+
+impl std::fmt::Display for Move {
+  fn fmt(&self, f: &mut std::fmt::Formatter) -> std::fmt::Result {
+    match self {
+      Move::Face(face, amt, dir) => write!(f, "{:?}{}{}", face, amt, dir),
     }
   }
 }
@@ -85,10 +111,40 @@ impl Alg {
   }
 }
 
+impl std::fmt::Display for Alg {
+  fn fmt(&self, f: &mut std::fmt::Formatter) -> std::fmt::Result {
+    match self {
+      Alg::Seq(moves) => write!(
+        f,
+        "{}",
+        moves
+          .iter()
+          .map(|m| format!("{} ", m))
+          .collect::<String>()
+          .trim_end()
+      ),
+      Alg::Comm(a, b) => write!(f, "[{}, {}]", a, b),
+      Alg::Conj(a, b) => write!(f, "[{}: {}]", a, b),
+    }
+  }
+}
+
 #[cfg(test)]
 mod tests {
   use super::*;
   use parser::parse_alg;
+  use std::string::ToString;
+
+  #[test]
+  fn display() {
+    assert_eq!("R", parse_alg("R").unwrap().to_string());
+    assert_eq!("U2", parse_alg("U2").unwrap().to_string());
+    assert_eq!("D2'", parse_alg("D2'").unwrap().to_string());
+    assert_eq!("L'", parse_alg("L'").unwrap().to_string());
+
+    assert_eq!("[R, U]", parse_alg("[R,U]").unwrap().to_string());
+    assert_eq!("[D: U]", parse_alg("[ D   :U ]").unwrap().to_string());
+  }
 
   #[test]
   fn expand() {
