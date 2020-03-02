@@ -110,6 +110,16 @@ impl Alg {
     Alg::Seq(moves)
   }
 
+  pub fn invert(&self) -> Alg {
+    match self {
+      Alg::Seq(inner) => {
+        Alg::Seq(inner.iter().rev().map(|m| m.invert()).collect())
+      }
+      Alg::Comm(a, b) => Alg::Comm(b.clone(), a.clone()),
+      Alg::Conj(a, b) => Alg::Conj(a.clone(), Box::new(b.invert())),
+    }
+  }
+
   pub fn iter(&self) -> impl Iterator<Item = Move> {
     self.expand().seq_as_vec().into_iter()
   }
@@ -163,5 +173,20 @@ mod tests {
 
     let alg = parse_alg("[R': [R, U]]").unwrap();
     assert_eq!(parse_alg("R' R U R' U' R").unwrap(), alg.expand());
+  }
+
+  #[test]
+  fn invert() {
+    let alg = parse_alg("R U R'").unwrap();
+    assert_eq!(parse_alg("R U' R'").unwrap(), alg.invert());
+
+    let alg = parse_alg("[R, U]").unwrap();
+    assert_eq!(parse_alg("[U, R]").unwrap(), alg.invert());
+
+    let alg = parse_alg("[F: [R, U]]").unwrap();
+    assert_eq!(parse_alg("[F: [U, R]]").unwrap(), alg.invert());
+
+    let alg = parse_alg("[F: R U R']").unwrap();
+    assert_eq!(parse_alg("[F: R U' R']").unwrap(), alg.invert());
   }
 }
