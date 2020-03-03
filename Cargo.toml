@@ -1,6 +1,7 @@
 [workspace]
 
 members = [
+    "alg-list-gen",
     "cube",
     "cycles",
 ]

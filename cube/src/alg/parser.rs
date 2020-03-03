@@ -101,7 +101,7 @@ pub fn parse_alg(input: &str) -> Result<Alg, ParseError> {
     return Ok(Alg::Seq(vec![]));
   }
   parse_alg_inner(input, EndOfInputMode::None).map(|r| {
-    assert!(r.1.trim_start().len() == 0);
+    assert_eq!(r.1.trim_start().len(), 0);
     r.0
   })
 }

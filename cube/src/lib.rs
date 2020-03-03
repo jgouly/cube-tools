@@ -5,7 +5,7 @@ mod corner_pos;
 mod edge_pos;
 mod sticker_cube;
 
-pub use alg::parse_alg;
+pub use alg::{parse_alg, Alg, Move};
 pub use corner_pos::CornerPos;
 pub use edge_pos::EdgePos;
 pub use sticker_cube::StickerCube;
