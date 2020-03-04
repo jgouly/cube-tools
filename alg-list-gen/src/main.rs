@@ -1,3 +1,4 @@
+use alg_list_gen::{get_alg_category, Category};
 use cube::{parse_alg, Alg, CornerPos, StickerCube};
 use cycles::get_piece_cycles;
 
@@ -26,10 +27,13 @@ fn alg_cubing_url(alg: &Alg) -> String {
 }
 
 fn format_alg(alg: &Alg) -> String {
-  div(a(
-    alg_cubing_url(alg),
-    format!("{:?} {}", get_corner_cycle(alg), alg),
-  ))
+  match get_alg_category(alg) {
+    Some(Category::CornerCycle3) => div(a(
+      alg_cubing_url(alg),
+      format!("{:?} {}", get_corner_cycle(alg), alg),
+    )),
+    _ => unimplemented!(),
+  }
 }
 
 const TEMPLATE: &str =
