@@ -1,5 +1,5 @@
 use alg_list_gen::{get_alg_category, Category};
-use cube::{parse_alg, Alg, CornerPos, StickerCube};
+use cube::{parse_alg, Alg, CornerPos, EdgePos, StickerCube};
 use cycles::get_piece_cycles;
 
 fn div(text: impl AsRef<str>) -> String {
@@ -32,6 +32,10 @@ fn format_alg(alg: &Alg) -> String {
       alg_cubing_url(alg),
       format!("{:?} {}", get_corner_cycle(alg), alg),
     )),
+    Some(Category::EdgeCycle3) => div(a(
+      alg_cubing_url(alg),
+      format!("{:?} {}", get_edge_cycle(alg), alg),
+    )),
     _ => unimplemented!(),
   }
 }
@@ -51,6 +55,15 @@ fn get_corner_cycle(alg: &Alg) -> Vec<Vec<CornerPos>> {
   }
 
   get_piece_cycles::<CornerPos>(&c)
+}
+
+fn get_edge_cycle(alg: &Alg) -> Vec<Vec<EdgePos>> {
+  let mut c = StickerCube::solved();
+  for m in alg.invert().iter() {
+    c.do_move_mut(m);
+  }
+
+  get_piece_cycles::<EdgePos>(&c)
 }
 
 fn read_algs() -> Vec<Alg> {
