@@ -68,7 +68,23 @@ fn read_algs() -> Vec<Alg> {
   algs
 }
 
+fn all_equal<I: Iterator<Item = T>, T: PartialEq>(mut iter: I) -> bool {
+  match iter.next() {
+    None => true,
+    Some(a) => iter.all(|x| a == x),
+  }
+}
+
+fn all_same_category(algs: &[Alg]) -> bool {
+  all_equal(
+    algs
+      .iter()
+      .map(|a| std::mem::discriminant(&get_alg_category(a))),
+  )
+}
+
 fn main() {
   let algs = read_algs();
+  assert!(all_same_category(&algs));
   println!("{}", gen_alg_list(algs));
 }
