@@ -1,4 +1,4 @@
-use crate::Face;
+use crate::{Face, Slice};
 
 mod parser;
 pub use parser::parse_alg;
@@ -51,12 +51,14 @@ impl std::fmt::Display for Direction {
 #[cfg_attr(test, derive(PartialEq))]
 pub enum Move {
   Face(Face, Amount, Direction),
+  Slice(Slice, Amount, Direction),
 }
 
 impl Move {
   fn invert(&self) -> Move {
     match self {
       Move::Face(f, amt, dir) => Move::Face(*f, *amt, dir.invert()),
+      Move::Slice(s, amt, dir) => Move::Slice(*s, *amt, dir.invert()),
     }
   }
 }
@@ -65,6 +67,7 @@ impl std::fmt::Display for Move {
   fn fmt(&self, f: &mut std::fmt::Formatter) -> std::fmt::Result {
     match self {
       Move::Face(face, amt, dir) => write!(f, "{:?}{}{}", face, amt, dir),
+      Move::Slice(slice, amt, dir) => write!(f, "{:?}{}{}", slice, amt, dir),
     }
   }
 }
@@ -155,6 +158,9 @@ mod tests {
     assert_eq!("U2", parse_alg("U2").unwrap().to_string());
     assert_eq!("D2'", parse_alg("D2'").unwrap().to_string());
     assert_eq!("L'", parse_alg("L'").unwrap().to_string());
+    assert_eq!("E", parse_alg("E").unwrap().to_string());
+    assert_eq!("M2", parse_alg("M2").unwrap().to_string());
+    assert_eq!("S'", parse_alg("S'").unwrap().to_string());
 
     assert_eq!("[R, U]", parse_alg("[R,U]").unwrap().to_string());
     assert_eq!("[D: U]", parse_alg("[ D   :U ]").unwrap().to_string());

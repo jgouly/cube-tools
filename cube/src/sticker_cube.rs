@@ -1,5 +1,5 @@
 use crate::alg::{Amount, Direction, Move};
-use crate::{CentrePos, CornerPos, EdgePos, Face};
+use crate::{CentrePos, CornerPos, EdgePos, Face, Slice};
 use std::convert::TryFrom;
 use std::ops::{Index, IndexMut};
 
@@ -129,6 +129,22 @@ impl StickerCube {
           }
         }
       }
+
+      Move::Slice(s, amt, dir) => {
+        let amt = match (amt, dir) {
+          (Amount::Single, Direction::Clockwise) => 1,
+          (Amount::Single, Direction::AntiClockwise) => 3,
+          (Amount::Double, _) => 2,
+        };
+
+        for _ in 0..amt {
+          match s {
+            Slice::E => self.do_e(),
+            Slice::M => self.do_m(),
+            Slice::S => self.do_s(),
+          }
+        }
+      }
     }
   }
 
@@ -196,6 +212,33 @@ impl StickerCube {
     cycle4(UFL, FDL, DBL, BUL, self);
     cycle4(FLU, DLF, BLD, ULB, self);
     cycle4(LUF, LFD, LDB, LBU, self);
+  }
+
+  fn do_e(&mut self) {
+    use EdgePos::*;
+    cycle4(FR, RB, BL, LF, self);
+    cycle4(RF, BR, LB, FL, self);
+
+    use CentrePos::*;
+    cycle4(F, R, B, L, self);
+  }
+
+  fn do_m(&mut self) {
+    use EdgePos::*;
+    cycle4(UF, FD, DB, BU, self);
+    cycle4(FU, DF, BD, UB, self);
+
+    use CentrePos::*;
+    cycle4(U, F, D, B, self);
+  }
+
+  fn do_s(&mut self) {
+    use EdgePos::*;
+    cycle4(UR, RD, DL, LU, self);
+    cycle4(RU, DR, LD, UL, self);
+
+    use CentrePos::*;
+    cycle4(U, R, D, L, self);
   }
 }
 
@@ -835,6 +878,297 @@ mod tests {
         edges: [
           S0, S2, S3, S5, S0, S4, S0, S1, S3, S2, S0, S5, S3, S4, S3, S1, S2,
           S1, S4, S5, S2, S5, S4, S1
+        ]
+      },
+      c
+    );
+  }
+
+  #[test]
+  fn slice_e() {
+    let e = Move::Slice(Slice::E, Amount::Single, Direction::Clockwise);
+    let mut c = StickerCube::solved();
+    c.do_move_mut(e);
+
+    assert_eq!(FR, c.edge(FR));
+    assert_eq!(FL, c.edge(FL));
+    assert_eq!(BL, c.edge(BL));
+    assert_eq!(BR, c.edge(BR));
+
+    assert_eq!(UR, c.edge(UF));
+    assert_eq!(UF, c.edge(UL));
+    assert_eq!(UL, c.edge(UB));
+    assert_eq!(UB, c.edge(UR));
+
+    assert_eq!(
+      StickerCube {
+        centres: [S0, S2, S5, S3, S1, S4],
+        corners: [
+          S0, S1, S2, S0, S2, S5, S0, S5, S4, S0, S4, S1, S3, S2, S1, S3, S5,
+          S2, S3, S4, S5, S3, S1, S4
+        ],
+        edges: [
+          S0, S2, S0, S5, S0, S4, S0, S1, S3, S2, S3, S5, S3, S4, S3, S1, S5,
+          S2, S5, S4, S1, S4, S1, S2
+        ]
+      },
+      c
+    );
+  }
+
+  #[test]
+  fn slice_eprime() {
+    let eprime =
+      Move::Slice(Slice::E, Amount::Single, Direction::AntiClockwise);
+    let mut c = StickerCube::solved();
+    c.do_move_mut(eprime);
+
+    assert_eq!(FR, c.edge(FR));
+    assert_eq!(FL, c.edge(FL));
+    assert_eq!(BL, c.edge(BL));
+    assert_eq!(BR, c.edge(BR));
+
+    assert_eq!(UL, c.edge(UF));
+    assert_eq!(UB, c.edge(UL));
+    assert_eq!(UR, c.edge(UB));
+    assert_eq!(UF, c.edge(UR));
+
+    assert_eq!(
+      StickerCube {
+        centres: [S0, S4, S1, S3, S5, S2],
+        corners: [
+          S0, S1, S2, S0, S2, S5, S0, S5, S4, S0, S4, S1, S3, S2, S1, S3, S5,
+          S2, S3, S4, S5, S3, S1, S4
+        ],
+        edges: [
+          S0, S2, S0, S5, S0, S4, S0, S1, S3, S2, S3, S5, S3, S4, S3, S1, S1,
+          S4, S1, S2, S5, S2, S5, S4
+        ]
+      },
+      c
+    );
+  }
+
+  #[test]
+  fn slice_e2() {
+    let e2 = Move::Slice(Slice::E, Amount::Double, Direction::AntiClockwise);
+    let mut c = StickerCube::solved();
+    c.do_move_mut(e2);
+
+    assert_eq!(FR, c.edge(FR));
+    assert_eq!(FL, c.edge(FL));
+    assert_eq!(BL, c.edge(BL));
+    assert_eq!(BR, c.edge(BR));
+
+    assert_eq!(UB, c.edge(UF));
+    assert_eq!(UR, c.edge(UL));
+    assert_eq!(UF, c.edge(UB));
+    assert_eq!(UL, c.edge(UR));
+
+    assert_eq!(
+      StickerCube {
+        centres: [S0, S5, S4, S3, S2, S1],
+        corners: [
+          S0, S1, S2, S0, S2, S5, S0, S5, S4, S0, S4, S1, S3, S2, S1, S3, S5,
+          S2, S3, S4, S5, S3, S1, S4
+        ],
+        edges: [
+          S0, S2, S0, S5, S0, S4, S0, S1, S3, S2, S3, S5, S3, S4, S3, S1, S4,
+          S5, S4, S1, S2, S1, S2, S5
+        ]
+      },
+      c
+    );
+  }
+
+  #[test]
+  fn slice_m() {
+    let m = Move::Slice(Slice::M, Amount::Single, Direction::Clockwise);
+    let mut c = StickerCube::solved();
+    c.do_move_mut(m);
+
+    assert_eq!(UF, c.edge(UF));
+    assert_eq!(DF, c.edge(DF));
+    assert_eq!(DB, c.edge(DB));
+    assert_eq!(UB, c.edge(UB));
+
+    assert_eq!(FL, c.edge(UL));
+    assert_eq!(FR, c.edge(UR));
+    assert_eq!(BL, c.edge(DL));
+    assert_eq!(BR, c.edge(DR));
+
+    assert_eq!(
+      StickerCube {
+        centres: [S4, S1, S0, S2, S3, S5],
+        corners: [
+          S0, S1, S2, S0, S2, S5, S0, S5, S4, S0, S4, S1, S3, S2, S1, S3, S5,
+          S2, S3, S4, S5, S3, S1, S4
+        ],
+        edges: [
+          S4, S0, S0, S5, S4, S3, S0, S1, S2, S0, S3, S5, S2, S3, S3, S1, S2,
+          S1, S2, S5, S4, S5, S4, S1
+        ]
+      },
+      c
+    );
+  }
+
+  #[test]
+  fn slice_mprime() {
+    let mprime =
+      Move::Slice(Slice::M, Amount::Single, Direction::AntiClockwise);
+    let mut c = StickerCube::solved();
+    c.do_move_mut(mprime);
+
+    assert_eq!(UF, c.edge(UF));
+    assert_eq!(DF, c.edge(DF));
+    assert_eq!(DB, c.edge(DB));
+    assert_eq!(UB, c.edge(UB));
+
+    assert_eq!(BL, c.edge(UL));
+    assert_eq!(BR, c.edge(UR));
+    assert_eq!(FL, c.edge(DL));
+    assert_eq!(FR, c.edge(DR));
+
+    assert_eq!(
+      StickerCube {
+        centres: [S2, S1, S3, S4, S0, S5],
+        corners: [
+          S0, S1, S2, S0, S2, S5, S0, S5, S4, S0, S4, S1, S3, S2, S1, S3, S5,
+          S2, S3, S4, S5, S3, S1, S4
+        ],
+        edges: [
+          S2, S3, S0, S5, S2, S0, S0, S1, S4, S3, S3, S5, S4, S0, S3, S1, S2,
+          S1, S2, S5, S4, S5, S4, S1
+        ]
+      },
+      c
+    );
+  }
+
+  #[test]
+  fn slice_m2() {
+    let m2 = Move::Slice(Slice::M, Amount::Double, Direction::Clockwise);
+    let mut c = StickerCube::solved();
+    c.do_move_mut(m2);
+
+    assert_eq!(UF, c.edge(UF));
+    assert_eq!(DF, c.edge(DF));
+    assert_eq!(DB, c.edge(DB));
+    assert_eq!(UB, c.edge(UB));
+
+    assert_eq!(DL, c.edge(UL));
+    assert_eq!(DR, c.edge(UR));
+    assert_eq!(UL, c.edge(DL));
+    assert_eq!(UR, c.edge(DR));
+
+    assert_eq!(
+      StickerCube {
+        centres: [S3, S1, S4, S0, S2, S5],
+        corners: [
+          S0, S1, S2, S0, S2, S5, S0, S5, S4, S0, S4, S1, S3, S2, S1, S3, S5,
+          S2, S3, S4, S5, S3, S1, S4
+        ],
+        edges: [
+          S3, S4, S0, S5, S3, S2, S0, S1, S0, S4, S3, S5, S0, S2, S3, S1, S2,
+          S1, S2, S5, S4, S5, S4, S1
+        ]
+      },
+      c
+    );
+  }
+
+  #[test]
+  fn slice_s() {
+    let s = Move::Slice(Slice::S, Amount::Single, Direction::Clockwise);
+    let mut c = StickerCube::solved();
+    c.do_move_mut(s);
+
+    assert_eq!(UR, c.edge(UR));
+    assert_eq!(DR, c.edge(DR));
+    assert_eq!(DL, c.edge(DL));
+    assert_eq!(UL, c.edge(UL));
+
+    assert_eq!(RF, c.edge(UF));
+    assert_eq!(RB, c.edge(UB));
+    assert_eq!(LF, c.edge(DF));
+    assert_eq!(LB, c.edge(DB));
+
+    assert_eq!(
+      StickerCube {
+        centres: [S5, S0, S2, S1, S4, S3],
+        corners: [
+          S0, S1, S2, S0, S2, S5, S0, S5, S4, S0, S4, S1, S3, S2, S1, S3, S5,
+          S2, S3, S4, S5, S3, S1, S4
+        ],
+        edges: [
+          S0, S2, S5, S3, S0, S4, S5, S0, S3, S2, S1, S3, S3, S4, S1, S0, S2,
+          S1, S2, S5, S4, S5, S4, S1
+        ]
+      },
+      c
+    );
+  }
+
+  #[test]
+  fn slice_sprime() {
+    let sprime =
+      Move::Slice(Slice::S, Amount::Single, Direction::AntiClockwise);
+    let mut c = StickerCube::solved();
+    c.do_move_mut(sprime);
+
+    assert_eq!(UR, c.edge(UR));
+    assert_eq!(DR, c.edge(DR));
+    assert_eq!(DL, c.edge(DL));
+    assert_eq!(UL, c.edge(UL));
+
+    assert_eq!(LF, c.edge(UF));
+    assert_eq!(LB, c.edge(UB));
+    assert_eq!(RF, c.edge(DF));
+    assert_eq!(RB, c.edge(DB));
+
+    assert_eq!(
+      StickerCube {
+        centres: [S1, S3, S2, S5, S4, S0],
+        corners: [
+          S0, S1, S2, S0, S2, S5, S0, S5, S4, S0, S4, S1, S3, S2, S1, S3, S5,
+          S2, S3, S4, S5, S3, S1, S4
+        ],
+        edges: [
+          S0, S2, S1, S0, S0, S4, S1, S3, S3, S2, S5, S0, S3, S4, S5, S3, S2,
+          S1, S2, S5, S4, S5, S4, S1
+        ]
+      },
+      c
+    );
+  }
+
+  #[test]
+  fn slice_s2() {
+    let s2 = Move::Slice(Slice::S, Amount::Double, Direction::Clockwise);
+    let mut c = StickerCube::solved();
+    c.do_move_mut(s2);
+
+    assert_eq!(UR, c.edge(UR));
+    assert_eq!(DR, c.edge(DR));
+    assert_eq!(DL, c.edge(DL));
+    assert_eq!(UL, c.edge(UL));
+
+    assert_eq!(DF, c.edge(UF));
+    assert_eq!(DB, c.edge(UB));
+    assert_eq!(UF, c.edge(DF));
+    assert_eq!(UB, c.edge(DB));
+
+    assert_eq!(
+      StickerCube {
+        centres: [S3, S5, S2, S0, S4, S1],
+        corners: [
+          S0, S1, S2, S0, S2, S5, S0, S5, S4, S0, S4, S1, S3, S2, S1, S3, S5,
+          S2, S3, S4, S5, S3, S1, S4
+        ],
+        edges: [
+          S0, S2, S3, S1, S0, S4, S3, S5, S3, S2, S0, S1, S3, S4, S0, S5, S2,
+          S1, S2, S5, S4, S5, S4, S1
         ]
       },
       c

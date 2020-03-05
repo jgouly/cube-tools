@@ -1,4 +1,4 @@
-use crate::alg::{Alg, Amount, Direction, Face, Move};
+use crate::alg::{Alg, Amount, Direction, Face, Move, Slice};
 use std::convert::TryFrom;
 
 #[derive(Debug)]
@@ -39,6 +39,9 @@ fn parse_single_move(
   if let Ok(face) = Face::try_from(c) {
     let ((amt, dir), input) = parse_move_suffix(next_input);
     Ok((Some(Move::Face(face, amt, dir)), input))
+  } else if let Ok(slice) = Slice::try_from(c) {
+    let ((amt, dir), input) = parse_move_suffix(next_input);
+    Ok((Some(Move::Slice(slice, amt, dir)), input))
   } else {
     match (c, mode) {
       (':', EndOfInputMode::Separator) => Ok((None, input)),
@@ -109,7 +112,7 @@ pub fn parse_alg(input: &str) -> Result<Alg, ParseError> {
 #[cfg(test)]
 mod tests {
   use super::*;
-  use {Amount::*, Direction::*, Face::*};
+  use {Amount::*, Direction::*, Face::*, Slice::*};
 
   #[test]
   fn moves() {
@@ -133,6 +136,29 @@ mod tests {
       assert_eq!(
         Ok(Alg::Seq(vec![Move::Face(f, Double, AntiClockwise)])),
         parse_alg(&format!("{:?}2'", f))
+      );
+    }
+
+    let slices = [E, M, S];
+    for &s in &slices {
+      assert_eq!(
+        Ok(Alg::Seq(vec![Move::Slice(s, Single, Clockwise)])),
+        parse_alg(&format!("{:?}", s))
+      );
+
+      assert_eq!(
+        Ok(Alg::Seq(vec![Move::Slice(s, Single, AntiClockwise)])),
+        parse_alg(&format!("{:?}'", s))
+      );
+
+      assert_eq!(
+        Ok(Alg::Seq(vec![Move::Slice(s, Double, Clockwise)])),
+        parse_alg(&format!("{:?}2", s))
+      );
+
+      assert_eq!(
+        Ok(Alg::Seq(vec![Move::Slice(s, Double, AntiClockwise)])),
+        parse_alg(&format!("{:?}2'", s))
       );
     }
   }
