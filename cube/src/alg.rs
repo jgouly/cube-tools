@@ -46,18 +46,36 @@ impl std::fmt::Display for Direction {
   }
 }
 
+#[derive(Clone, Copy, Debug)]
+#[cfg_attr(test, derive(PartialEq))]
+pub enum Width {
+  One,
+  Two,
+}
+
+impl std::fmt::Display for Width {
+  fn fmt(&self, f: &mut std::fmt::Formatter) -> std::fmt::Result {
+    match self {
+      Width::One => Ok(()),
+      Width::Two => write!(f, "w"),
+    }
+  }
+}
+
 /// Represents a move of the cube.
 #[derive(Clone, Debug)]
 #[cfg_attr(test, derive(PartialEq))]
 pub enum Move {
-  Face(Face, Amount, Direction),
+  Face(Face, Amount, Direction, Width),
   Slice(Slice, Amount, Direction),
 }
 
 impl Move {
   fn invert(&self) -> Move {
     match self {
-      Move::Face(f, amt, dir) => Move::Face(*f, *amt, dir.invert()),
+      Move::Face(f, amt, dir, width) => {
+        Move::Face(*f, *amt, dir.invert(), *width)
+      }
       Move::Slice(s, amt, dir) => Move::Slice(*s, *amt, dir.invert()),
     }
   }
@@ -66,7 +84,9 @@ impl Move {
 impl std::fmt::Display for Move {
   fn fmt(&self, f: &mut std::fmt::Formatter) -> std::fmt::Result {
     match self {
-      Move::Face(face, amt, dir) => write!(f, "{:?}{}{}", face, amt, dir),
+      Move::Face(face, amt, dir, width) => {
+        write!(f, "{:?}{}{}{}", face, width, amt, dir)
+      }
       Move::Slice(slice, amt, dir) => write!(f, "{:?}{}{}", slice, amt, dir),
     }
   }
@@ -161,6 +181,7 @@ mod tests {
     assert_eq!("E", parse_alg("E").unwrap().to_string());
     assert_eq!("M2", parse_alg("M2").unwrap().to_string());
     assert_eq!("S'", parse_alg("S'").unwrap().to_string());
+    assert_eq!("Rw", parse_alg("Rw").unwrap().to_string());
 
     assert_eq!("[R, U]", parse_alg("[R,U]").unwrap().to_string());
     assert_eq!("[D: U]", parse_alg("[ D   :U ]").unwrap().to_string());

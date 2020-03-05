@@ -111,7 +111,7 @@ impl StickerCube {
   /// Apply a move.
   pub fn do_move_mut(&mut self, m: Move) {
     match m {
-      Move::Face(f, amt, dir) => {
+      Move::Face(f, amt, dir, _width) => {
         let amt = match (amt, dir) {
           (Amount::Single, Direction::Clockwise) => 1,
           (Amount::Single, Direction::AntiClockwise) => 3,
@@ -282,7 +282,7 @@ pos_index!(CornerPos, corners);
 #[cfg(test)]
 mod tests {
   use super::*;
-  use {CornerPos::*, EdgePos::*, Sticker::*};
+  use {crate::alg::Width, CornerPos::*, EdgePos::*, Sticker::*};
 
   #[test]
   fn is_solved() {
@@ -310,7 +310,8 @@ mod tests {
 
   #[test]
   fn face_u() {
-    let u = Move::Face(Face::U, Amount::Single, Direction::Clockwise);
+    let u =
+      Move::Face(Face::U, Amount::Single, Direction::Clockwise, Width::One);
     let mut c = StickerCube::solved();
     c.do_move_mut(u);
 
@@ -342,7 +343,12 @@ mod tests {
 
   #[test]
   fn face_uprime() {
-    let uprime = Move::Face(Face::U, Amount::Single, Direction::AntiClockwise);
+    let uprime = Move::Face(
+      Face::U,
+      Amount::Single,
+      Direction::AntiClockwise,
+      Width::One,
+    );
     let mut c = StickerCube::solved();
     c.do_move_mut(uprime);
 
@@ -374,7 +380,8 @@ mod tests {
 
   #[test]
   fn face_u2() {
-    let u2 = Move::Face(Face::U, Amount::Double, Direction::Clockwise);
+    let u2 =
+      Move::Face(Face::U, Amount::Double, Direction::Clockwise, Width::One);
     let mut c = StickerCube::solved();
     c.do_move_mut(u2);
 
@@ -406,7 +413,8 @@ mod tests {
 
   #[test]
   fn face_r() {
-    let r = Move::Face(Face::R, Amount::Single, Direction::Clockwise);
+    let r =
+      Move::Face(Face::R, Amount::Single, Direction::Clockwise, Width::One);
     let mut c = StickerCube::solved();
     c.do_move_mut(r);
 
@@ -438,7 +446,12 @@ mod tests {
 
   #[test]
   fn face_rprime() {
-    let rprime = Move::Face(Face::R, Amount::Single, Direction::AntiClockwise);
+    let rprime = Move::Face(
+      Face::R,
+      Amount::Single,
+      Direction::AntiClockwise,
+      Width::One,
+    );
     let mut c = StickerCube::solved();
     c.do_move_mut(rprime);
 
@@ -470,7 +483,8 @@ mod tests {
 
   #[test]
   fn face_r2() {
-    let r2 = Move::Face(Face::R, Amount::Double, Direction::Clockwise);
+    let r2 =
+      Move::Face(Face::R, Amount::Double, Direction::Clockwise, Width::One);
     let mut c = StickerCube::solved();
     c.do_move_mut(r2);
 
@@ -502,7 +516,8 @@ mod tests {
 
   #[test]
   fn face_f() {
-    let f = Move::Face(Face::F, Amount::Single, Direction::Clockwise);
+    let f =
+      Move::Face(Face::F, Amount::Single, Direction::Clockwise, Width::One);
     let mut c = StickerCube::solved();
     c.do_move_mut(f);
 
@@ -534,7 +549,12 @@ mod tests {
 
   #[test]
   fn face_fprime() {
-    let fprime = Move::Face(Face::F, Amount::Single, Direction::AntiClockwise);
+    let fprime = Move::Face(
+      Face::F,
+      Amount::Single,
+      Direction::AntiClockwise,
+      Width::One,
+    );
     let mut c = StickerCube::solved();
     c.do_move_mut(fprime);
 
@@ -566,7 +586,8 @@ mod tests {
 
   #[test]
   fn face_f2() {
-    let f2 = Move::Face(Face::F, Amount::Double, Direction::Clockwise);
+    let f2 =
+      Move::Face(Face::F, Amount::Double, Direction::Clockwise, Width::One);
     let mut c = StickerCube::solved();
     c.do_move_mut(f2);
 
@@ -598,7 +619,8 @@ mod tests {
 
   #[test]
   fn face_d() {
-    let d = Move::Face(Face::D, Amount::Single, Direction::Clockwise);
+    let d =
+      Move::Face(Face::D, Amount::Single, Direction::Clockwise, Width::One);
     let mut c = StickerCube::solved();
     c.do_move_mut(d);
 
@@ -630,7 +652,12 @@ mod tests {
 
   #[test]
   fn face_dprime() {
-    let dprime = Move::Face(Face::D, Amount::Single, Direction::AntiClockwise);
+    let dprime = Move::Face(
+      Face::D,
+      Amount::Single,
+      Direction::AntiClockwise,
+      Width::One,
+    );
     let mut c = StickerCube::solved();
     c.do_move_mut(dprime);
 
@@ -662,7 +689,8 @@ mod tests {
 
   #[test]
   fn face_d2() {
-    let d2 = Move::Face(Face::D, Amount::Double, Direction::Clockwise);
+    let d2 =
+      Move::Face(Face::D, Amount::Double, Direction::Clockwise, Width::One);
     let mut c = StickerCube::solved();
     c.do_move_mut(d2);
 
@@ -694,7 +722,8 @@ mod tests {
 
   #[test]
   fn face_b() {
-    let b = Move::Face(Face::B, Amount::Single, Direction::Clockwise);
+    let b =
+      Move::Face(Face::B, Amount::Single, Direction::Clockwise, Width::One);
     let mut c = StickerCube::solved();
     c.do_move_mut(b);
 
@@ -726,7 +755,12 @@ mod tests {
 
   #[test]
   fn face_bprime() {
-    let bprime = Move::Face(Face::B, Amount::Single, Direction::AntiClockwise);
+    let bprime = Move::Face(
+      Face::B,
+      Amount::Single,
+      Direction::AntiClockwise,
+      Width::One,
+    );
     let mut c = StickerCube::solved();
     c.do_move_mut(bprime);
 
@@ -758,7 +792,8 @@ mod tests {
 
   #[test]
   fn face_b2() {
-    let b2 = Move::Face(Face::B, Amount::Double, Direction::Clockwise);
+    let b2 =
+      Move::Face(Face::B, Amount::Double, Direction::Clockwise, Width::One);
     let mut c = StickerCube::solved();
     c.do_move_mut(b2);
 
@@ -790,7 +825,8 @@ mod tests {
 
   #[test]
   fn face_l() {
-    let l = Move::Face(Face::L, Amount::Single, Direction::Clockwise);
+    let l =
+      Move::Face(Face::L, Amount::Single, Direction::Clockwise, Width::One);
     let mut c = StickerCube::solved();
     c.do_move_mut(l);
 
@@ -822,7 +858,12 @@ mod tests {
 
   #[test]
   fn face_lprime() {
-    let lprime = Move::Face(Face::L, Amount::Single, Direction::AntiClockwise);
+    let lprime = Move::Face(
+      Face::L,
+      Amount::Single,
+      Direction::AntiClockwise,
+      Width::One,
+    );
     let mut c = StickerCube::solved();
     c.do_move_mut(lprime);
 
@@ -854,7 +895,8 @@ mod tests {
 
   #[test]
   fn face_l2() {
-    let l2 = Move::Face(Face::L, Amount::Double, Direction::Clockwise);
+    let l2 =
+      Move::Face(Face::L, Amount::Double, Direction::Clockwise, Width::One);
     let mut c = StickerCube::solved();
     c.do_move_mut(l2);
 
