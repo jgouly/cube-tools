@@ -27,7 +27,7 @@ fn alg_cubing_url(alg: &Alg) -> String {
 }
 
 fn format_alg(alg: &Alg) -> String {
-  match get_alg_category(alg) {
+  (match get_alg_category(alg) {
     Some(Category::CornerCycle3) => div(a(
       alg_cubing_url(alg),
       format!("{:?} {}", get_corner_cycle(alg), alg),
@@ -37,7 +37,7 @@ fn format_alg(alg: &Alg) -> String {
       format!("{:?} {}", get_edge_cycle(alg), alg),
     )),
     _ => unimplemented!(),
-  }
+  }) + "\n"
 }
 
 const TEMPLATE: &str =
