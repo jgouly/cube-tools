@@ -1,4 +1,4 @@
-use crate::alg::{Amount, Direction, Move};
+use crate::alg::{Amount, Direction, Move, Width};
 use crate::{CentrePos, CornerPos, EdgePos, Face, Slice};
 use std::convert::TryFrom;
 use std::ops::{Index, IndexMut};
@@ -111,7 +111,7 @@ impl StickerCube {
   /// Apply a move.
   pub fn do_move_mut(&mut self, m: Move) {
     match m {
-      Move::Face(f, amt, dir, _width) => {
+      Move::Face(f, amt, dir, width) => {
         let amt = match (amt, dir) {
           (Amount::Single, Direction::Clockwise) => 1,
           (Amount::Single, Direction::AntiClockwise) => 3,
@@ -119,13 +119,19 @@ impl StickerCube {
         };
 
         for _ in 0..amt {
-          match f {
-            Face::U => self.do_u(),
-            Face::R => self.do_r(),
-            Face::F => self.do_f(),
-            Face::D => self.do_d(),
-            Face::B => self.do_b(),
-            Face::L => self.do_l(),
+          match (f, width) {
+            (Face::U, Width::One) => self.do_u(),
+            (Face::U, Width::Two) => self.do_uw(),
+            (Face::R, Width::One) => self.do_r(),
+            (Face::R, Width::Two) => self.do_rw(),
+            (Face::F, Width::One) => self.do_f(),
+            (Face::F, Width::Two) => self.do_fw(),
+            (Face::D, Width::One) => self.do_d(),
+            (Face::D, Width::Two) => self.do_dw(),
+            (Face::B, Width::One) => self.do_b(),
+            (Face::B, Width::Two) => self.do_bw(),
+            (Face::L, Width::One) => self.do_l(),
+            (Face::L, Width::Two) => self.do_lw(),
           }
         }
       }
@@ -240,6 +246,42 @@ impl StickerCube {
     use CentrePos::*;
     cycle4(U, R, D, L, self);
   }
+
+  fn do_uw(&mut self) {
+    self.do_u();
+    self.do_e();
+    self.do_e();
+    self.do_e();
+  }
+
+  fn do_rw(&mut self) {
+    self.do_r();
+    self.do_m();
+    self.do_m();
+    self.do_m();
+  }
+
+  fn do_fw(&mut self) {
+    self.do_f();
+    self.do_s();
+  }
+
+  fn do_dw(&mut self) {
+    self.do_d();
+    self.do_e();
+  }
+
+  fn do_bw(&mut self) {
+    self.do_b();
+    self.do_s();
+    self.do_s();
+    self.do_s();
+  }
+
+  fn do_lw(&mut self) {
+    self.do_l();
+    self.do_m();
+  }
 }
 
 fn cycle4<T>(p0: T, p1: T, p2: T, p3: T, cube: &mut StickerCube)
@@ -282,7 +324,7 @@ pos_index!(CornerPos, corners);
 #[cfg(test)]
 mod tests {
   use super::*;
-  use {crate::alg::Width, CornerPos::*, EdgePos::*, Sticker::*};
+  use {CornerPos::*, EdgePos::*, Sticker::*};
 
   #[test]
   fn is_solved() {
@@ -1216,4 +1258,264 @@ mod tests {
       c
     );
   }
+
+  macro_rules! wide_move_test {
+    ($test_name: ident, $face: expr, $cw_cube: expr, $anti_cw_cube: expr, $double_cube: expr) => {
+      #[test]
+      fn $test_name() {
+        let clockwise =
+          Move::Face($face, Amount::Single, Direction::Clockwise, Width::Two);
+        let mut c = StickerCube::solved();
+        c.do_move_mut(clockwise);
+
+        assert_eq!($cw_cube, c);
+
+        let anti_clockwise = Move::Face(
+          $face,
+          Amount::Single,
+          Direction::AntiClockwise,
+          Width::Two,
+        );
+        let mut c = StickerCube::solved();
+        c.do_move_mut(anti_clockwise);
+
+        assert_eq!($anti_cw_cube, c);
+
+        let double =
+          Move::Face($face, Amount::Double, Direction::Clockwise, Width::Two);
+        let mut c = StickerCube::solved();
+        c.do_move_mut(double);
+
+        assert_eq!($double_cube, c);
+      }
+    };
+  }
+
+  wide_move_test!(
+    wide_u,
+    Face::U,
+    StickerCube {
+      centres: [S0, S4, S1, S3, S5, S2],
+      corners: [
+        S0, S4, S1, S0, S1, S2, S0, S2, S5, S0, S5, S4, S3, S2, S1, S3, S5, S2,
+        S3, S4, S5, S3, S1, S4
+      ],
+      edges: [
+        S0, S1, S0, S2, S0, S5, S0, S4, S3, S2, S3, S5, S3, S4, S3, S1, S1, S4,
+        S1, S2, S5, S2, S5, S4
+      ]
+    },
+    StickerCube {
+      centres: [S0, S2, S5, S3, S1, S4],
+      corners: [
+        S0, S2, S5, S0, S5, S4, S0, S4, S1, S0, S1, S2, S3, S2, S1, S3, S5, S2,
+        S3, S4, S5, S3, S1, S4
+      ],
+      edges: [
+        S0, S5, S0, S4, S0, S1, S0, S2, S3, S2, S3, S5, S3, S4, S3, S1, S5, S2,
+        S5, S4, S1, S4, S1, S2
+      ]
+    },
+    StickerCube {
+      centres: [S0, S5, S4, S3, S2, S1],
+      corners: [
+        S0, S5, S4, S0, S4, S1, S0, S1, S2, S0, S2, S5, S3, S2, S1, S3, S5, S2,
+        S3, S4, S5, S3, S1, S4
+      ],
+      edges: [
+        S0, S4, S0, S1, S0, S2, S0, S5, S3, S2, S3, S5, S3, S4, S3, S1, S4, S5,
+        S4, S1, S2, S1, S2, S5
+      ]
+    }
+  );
+
+  wide_move_test!(
+    wide_r,
+    Face::R,
+    StickerCube {
+      centres: [S2, S1, S3, S4, S0, S5],
+      corners: [
+        S2, S1, S3, S0, S2, S5, S0, S5, S4, S2, S0, S1, S4, S3, S1, S3, S5, S2,
+        S3, S4, S5, S4, S1, S0
+      ],
+      edges: [
+        S2, S3, S0, S5, S2, S0, S2, S1, S4, S3, S3, S5, S4, S0, S4, S1, S3, S1,
+        S2, S5, S4, S5, S0, S1
+      ]
+    },
+    StickerCube {
+      centres: [S4, S1, S0, S2, S3, S5],
+      corners: [
+        S4, S1, S0, S0, S2, S5, S0, S5, S4, S4, S3, S1, S2, S0, S1, S3, S5, S2,
+        S3, S4, S5, S2, S1, S3
+      ],
+      edges: [
+        S4, S0, S0, S5, S4, S3, S4, S1, S2, S0, S3, S5, S2, S3, S2, S1, S0, S1,
+        S2, S5, S4, S5, S3, S1
+      ]
+    },
+    StickerCube {
+      centres: [S3, S1, S4, S0, S2, S5],
+      corners: [
+        S3, S1, S4, S0, S2, S5, S0, S5, S4, S3, S2, S1, S0, S4, S1, S3, S5, S2,
+        S3, S4, S5, S0, S1, S2
+      ],
+      edges: [
+        S3, S4, S0, S5, S3, S2, S3, S1, S0, S4, S3, S5, S0, S2, S0, S1, S4, S1,
+        S2, S5, S4, S5, S2, S1
+      ]
+    }
+  );
+
+  wide_move_test!(
+    wide_f,
+    Face::F,
+    StickerCube {
+      centres: [S5, S0, S2, S1, S4, S3],
+      corners: [
+        S5, S0, S2, S5, S2, S3, S0, S5, S4, S0, S4, S1, S1, S2, S0, S1, S3, S2,
+        S3, S4, S5, S3, S1, S4
+      ],
+      edges: [
+        S5, S2, S5, S3, S0, S4, S5, S0, S1, S2, S1, S3, S3, S4, S1, S0, S2, S0,
+        S2, S3, S4, S5, S4, S1
+      ]
+    },
+    StickerCube {
+      centres: [S1, S3, S2, S5, S4, S0],
+      corners: [
+        S1, S3, S2, S1, S2, S0, S0, S5, S4, S0, S4, S1, S5, S2, S3, S5, S0, S2,
+        S3, S4, S5, S3, S1, S4
+      ],
+      edges: [
+        S1, S2, S1, S0, S0, S4, S1, S3, S5, S2, S5, S0, S3, S4, S5, S3, S2, S3,
+        S2, S0, S4, S5, S4, S1
+      ]
+    },
+    StickerCube {
+      centres: [S3, S5, S2, S0, S4, S1],
+      corners: [
+        S3, S5, S2, S3, S2, S1, S0, S5, S4, S0, S4, S1, S0, S2, S5, S0, S1, S2,
+        S3, S4, S5, S3, S1, S4
+      ],
+      edges: [
+        S3, S2, S3, S1, S0, S4, S3, S5, S0, S2, S0, S1, S3, S4, S0, S5, S2, S5,
+        S2, S1, S4, S5, S4, S1
+      ]
+    }
+  );
+
+  wide_move_test!(
+    wide_d,
+    Face::D,
+    StickerCube {
+      centres: [S0, S2, S5, S3, S1, S4],
+      corners: [
+        S0, S1, S2, S0, S2, S5, S0, S5, S4, S0, S4, S1, S3, S5, S2, S3, S4, S5,
+        S3, S1, S4, S3, S2, S1
+      ],
+      edges: [
+        S0, S2, S0, S5, S0, S4, S0, S1, S3, S5, S3, S4, S3, S1, S3, S2, S5, S2,
+        S5, S4, S1, S4, S1, S2
+      ]
+    },
+    StickerCube {
+      centres: [S0, S4, S1, S3, S5, S2],
+      corners: [
+        S0, S1, S2, S0, S2, S5, S0, S5, S4, S0, S4, S1, S3, S1, S4, S3, S2, S1,
+        S3, S5, S2, S3, S4, S5
+      ],
+      edges: [
+        S0, S2, S0, S5, S0, S4, S0, S1, S3, S1, S3, S2, S3, S5, S3, S4, S1, S4,
+        S1, S2, S5, S2, S5, S4
+      ]
+    },
+    StickerCube {
+      centres: [S0, S5, S4, S3, S2, S1],
+      corners: [
+        S0, S1, S2, S0, S2, S5, S0, S5, S4, S0, S4, S1, S3, S4, S5, S3, S1, S4,
+        S3, S2, S1, S3, S5, S2
+      ],
+      edges: [
+        S0, S2, S0, S5, S0, S4, S0, S1, S3, S4, S3, S1, S3, S2, S3, S5, S4, S5,
+        S4, S1, S2, S1, S2, S5
+      ]
+    }
+  );
+
+  wide_move_test!(
+    wide_b,
+    Face::B,
+    StickerCube {
+      centres: [S1, S3, S2, S5, S4, S0],
+      corners: [
+        S0, S1, S2, S0, S2, S5, S1, S0, S4, S1, S4, S3, S3, S2, S1, S3, S5, S2,
+        S5, S4, S0, S5, S3, S4
+      ],
+      edges: [
+        S0, S2, S1, S0, S1, S4, S1, S3, S3, S2, S5, S0, S5, S4, S5, S3, S2, S1,
+        S2, S5, S4, S0, S4, S3
+      ]
+    },
+    StickerCube {
+      centres: [S5, S0, S2, S1, S4, S3],
+      corners: [
+        S0, S1, S2, S0, S2, S5, S5, S3, S4, S5, S4, S0, S3, S2, S1, S3, S5, S2,
+        S1, S4, S3, S1, S0, S4
+      ],
+      edges: [
+        S0, S2, S5, S3, S5, S4, S5, S0, S3, S2, S1, S3, S1, S4, S1, S0, S2, S1,
+        S2, S5, S4, S3, S4, S0
+      ]
+    },
+    StickerCube {
+      centres: [S3, S5, S2, S0, S4, S1],
+      corners: [
+        S0, S1, S2, S0, S2, S5, S3, S1, S4, S3, S4, S5, S3, S2, S1, S3, S5, S2,
+        S0, S4, S1, S0, S5, S4
+      ],
+      edges: [
+        S0, S2, S3, S1, S3, S4, S3, S5, S3, S2, S0, S1, S0, S4, S0, S5, S2, S1,
+        S2, S5, S4, S1, S4, S5
+      ]
+    }
+  );
+
+  wide_move_test!(
+    wide_l,
+    Face::L,
+    StickerCube {
+      centres: [S4, S1, S0, S2, S3, S5],
+      corners: [
+        S0, S1, S2, S4, S0, S5, S4, S5, S3, S0, S4, S1, S3, S2, S1, S2, S5, S0,
+        S2, S3, S5, S3, S1, S4
+      ],
+      edges: [
+        S4, S0, S4, S5, S4, S3, S0, S1, S2, S0, S2, S5, S2, S3, S3, S1, S2, S1,
+        S0, S5, S3, S5, S4, S1
+      ]
+    },
+    StickerCube {
+      centres: [S2, S1, S3, S4, S0, S5],
+      corners: [
+        S0, S1, S2, S2, S3, S5, S2, S5, S0, S0, S4, S1, S3, S2, S1, S4, S5, S3,
+        S4, S0, S5, S3, S1, S4
+      ],
+      edges: [
+        S2, S3, S2, S5, S2, S0, S0, S1, S4, S3, S4, S5, S4, S0, S3, S1, S2, S1,
+        S3, S5, S0, S5, S4, S1
+      ]
+    },
+    StickerCube {
+      centres: [S3, S1, S4, S0, S2, S5],
+      corners: [
+        S0, S1, S2, S3, S4, S5, S3, S5, S2, S0, S4, S1, S3, S2, S1, S0, S5, S4,
+        S0, S2, S5, S3, S1, S4
+      ],
+      edges: [
+        S3, S4, S3, S5, S3, S2, S0, S1, S0, S4, S0, S5, S0, S2, S3, S1, S2, S1,
+        S4, S5, S2, S5, S4, S1
+      ]
+    }
+  );
 }
