@@ -66,7 +66,7 @@ fn get_edge_cycle(alg: &Alg) -> Vec<Vec<EdgePos>> {
   get_piece_cycles::<EdgePos>(&c)
 }
 
-fn read_algs() -> Vec<Alg> {
+fn read_algs() -> Result<Vec<Alg>, String> {
   let mut algs = vec![];
 
   loop {
@@ -75,10 +75,16 @@ fn read_algs() -> Vec<Alg> {
     if res == 0 {
       break;
     }
-    let alg = parse_alg(&alg).unwrap();
+
+    if alg.trim() == "" {
+      continue;
+    }
+
+    let alg = parse_alg(&alg).map_err(|_e| format!("Bad alg: {}", alg))?;
     algs.push(alg);
   }
-  algs
+
+  Ok(algs)
 }
 
 fn all_equal<I: Iterator<Item = T>, T: PartialEq>(mut iter: I) -> bool {
@@ -96,8 +102,10 @@ fn all_same_category(algs: &[Alg]) -> bool {
   )
 }
 
-fn main() {
-  let algs = read_algs();
+fn main() -> Result<(), String> {
+  let algs = read_algs()?;
   assert!(all_same_category(&algs));
   println!("{}", gen_alg_list(algs));
+
+  Ok(())
 }
