@@ -6,6 +6,10 @@ fn div(text: impl AsRef<str>) -> String {
   format!("<div>{}</div>", text.as_ref())
 }
 
+fn div_with_attr(text: impl AsRef<str>, attr: impl AsRef<str>) -> String {
+  format!("<div{}>{}</div>", attr.as_ref(), text.as_ref())
+}
+
 fn a(link: impl AsRef<str>, text: impl AsRef<str>) -> String {
   format!(
     "<a href=\"{}\" target=\"_blank\">{}</a>",
@@ -28,10 +32,19 @@ fn alg_cubing_url(alg: &Alg) -> String {
 
 fn format_alg(alg: &Alg) -> String {
   (match get_alg_category(alg) {
-    Some(Category::CornerCycle3) => div(a(
-      alg_cubing_url(alg),
-      format!("{:?} {}", get_corner_cycle(alg), alg),
-    )),
+    Some(Category::CornerCycle3) => {
+      let cycle = get_corner_cycle(alg);
+      div_with_attr(
+        div_with_attr(
+          div_with_attr(
+            div(a(alg_cubing_url(alg), format!("{:?} {}", cycle, alg))),
+            format!(" class='{:?}'", cycle[0][2]),
+          ),
+          format!(" class='{:?}'", cycle[0][1]),
+        ),
+        format!(" class='{:?}'", cycle[0][0]),
+      )
+    }
     Some(Category::EdgeCycle3) => div(a(
       alg_cubing_url(alg),
       format!("{:?} {}", get_edge_cycle(alg), alg),
@@ -43,9 +56,22 @@ fn format_alg(alg: &Alg) -> String {
 const TEMPLATE: &str =
   include_str!(concat!(env!("CARGO_MANIFEST_DIR"), "/templates/main.html"));
 
+fn filter_html(algs: &[Alg]) -> &'static str {
+  match get_alg_category(&algs[0]) {
+    Some(Category::CornerCycle3) => {
+      r#"<input type="text" id="p0" size="3"></input>
+         <input type="text" id="p1" size="3"></input>
+         <input type="text" id="p2" size="3"></input>"#
+    }
+    _ => unimplemented!(),
+  }
+}
+
 fn gen_alg_list(algs: Vec<Alg>) -> String {
   let algs_html = algs.iter().map(format_alg).collect::<String>();
-  String::from(TEMPLATE).replace("BODY", &algs_html)
+  let filter_html = filter_html(&algs);
+  let body = String::from(filter_html) + &algs_html;
+  String::from(TEMPLATE).replace("BODY", &body)
 }
 
 fn get_corner_cycle(alg: &Alg) -> Vec<Vec<CornerPos>> {

@@ -7,11 +7,33 @@
         font-family: "Courier New";
       }
       a {
-        text-decoration:none;
+        text-decoration: none;
       }
     </style>
+    <style id="current_search"></style>
+    <script type="text/javascript">
+      function filter(e) {
+        const sheet = document.getElementById('current_search');
+        const p0 = document.getElementById('p0');
+        const p1 = document.getElementById('p1');
+        const p2 = document.getElementById('p2');
+        const p0v = p0.value == '' ? '*' : `.${p0.value}`;
+        const p1v = p1.value == '' ? '*' : `.${p1.value}`;
+        const p2v = p2.value == '' ? '*' : `.${p2.value}`;
+        sheet.textContent = `#algs > * > * > * { display:none; }
+                             #algs > ${p0v} > ${p1v} > ${p2v} { display: block; }`;
+      }
+
+      window.addEventListener('load', e => {
+        document.querySelectorAll('input').forEach(el => {
+          el.addEventListener('input', filter);
+        });
+      });
+    </script>
   </head>
   <body>
+<div id="algs">
 BODY
+</div>
   </body>
 </html>
