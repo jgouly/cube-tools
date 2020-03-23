@@ -44,7 +44,7 @@ impl StickerCube {
     }
   }
 
-  fn corners_solved(&self) -> bool {
+  pub fn corners_solved(&self) -> bool {
     use CornerPos::*;
     let sticker_check = |pos: &[CornerPos], centre: CentrePos| {
       pos.iter().map(|&c| self[c]).all(|e| e == self[centre])
@@ -57,7 +57,7 @@ impl StickerCube {
       && sticker_check(&[LUF, LBU, LDB, LFD], CentrePos::L)
   }
 
-  fn edges_solved(&self) -> bool {
+  pub fn edges_solved(&self) -> bool {
     use EdgePos::*;
     let sticker_check = |pos: &[EdgePos], centre: CentrePos| {
       pos.iter().map(|&c| self[c]).all(|e| e == self[centre])

@@ -6,6 +6,7 @@ pub trait Piece: PartialEq + Copy {
   fn lookup(cube: &StickerCube, p: Self) -> Self;
   fn set(cube: &mut StickerCube, p0: Self, p1: Self);
   fn orient(&self) -> Self;
+  fn solved(cube: &StickerCube) -> bool;
 }
 
 impl Piece for EdgePos {
@@ -24,6 +25,10 @@ impl Piece for EdgePos {
   fn orient(&self) -> Self {
     (*self).orient()
   }
+
+  fn solved(cube: &StickerCube) -> bool {
+    cube.edges_solved()
+  }
 }
 
 impl Piece for CornerPos {
@@ -41,6 +46,10 @@ impl Piece for CornerPos {
 
   fn orient(&self) -> Self {
     (*self).orient()
+  }
+
+  fn solved(cube: &StickerCube) -> bool {
+    cube.corners_solved()
   }
 }
 
