@@ -11,6 +11,10 @@ dependencies = [
 [[package]]
 name = "bld-solver"
 version = "0.1.0"
+dependencies = [
+ "cube",
+ "cycles",
+]
 
 [[package]]
 name = "cube"
