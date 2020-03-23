@@ -18,7 +18,7 @@ pub enum Sticker {
 ///
 /// This representation includes centre pieces so it can
 /// represent slice turns and rotations.
-#[derive(Debug)]
+#[derive(Clone, Debug)]
 #[cfg_attr(test, derive(PartialEq))]
 pub struct StickerCube {
   centres: [Sticker; 6],
