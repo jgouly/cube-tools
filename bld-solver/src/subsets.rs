@@ -1,8 +1,14 @@
 use crate::State;
 use cube::StickerCube;
-use cycles::Piece;
+use cycles::{cycle_len, get_piece_cycles, Piece};
 
-pub(crate) fn exec_3cycle<P: Piece>(c: &mut StickerCube, cycle: [P; 3]) {
+pub(crate) fn exec_3cycle<P: Piece + std::fmt::Debug>(
+  c: &mut StickerCube,
+  cycle: [P; 3],
+) {
+  assert_ne!(cycle[0].orient(), cycle[1].orient());
+  assert_ne!(cycle[0].orient(), cycle[2].orient());
+  assert_ne!(cycle[1].orient(), cycle[2].orient());
   let p0 = P::lookup(c, cycle[0]);
   let p1 = P::lookup(c, cycle[1]);
   let p2 = P::lookup(c, cycle[2]);
@@ -27,6 +33,28 @@ pub(crate) fn try_3cycle<P: Piece + std::fmt::Debug>(
   let cycle = [buffer, p0, p1];
   let mut next_cube = c.clone();
   exec_3cycle(&mut next_cube, cycle);
+  Some((cycle.to_vec(), State { cube: next_cube }))
+}
+
+fn exec_2twist<P: Piece + std::fmt::Debug>(c: &mut StickerCube, cycle: [P; 2]) {
+  assert_ne!(cycle[0].orient(), cycle[1].orient());
+  P::set(c, cycle[0].orient(), cycle[0].orient());
+  P::set(c, cycle[1].orient(), cycle[1].orient());
+}
+
+pub(crate) fn try_2twist<P: Piece + std::fmt::Debug>(
+  state: &State,
+) -> Option<(Vec<P>, State)> {
+  let pieces = get_piece_cycles::<P>(&state.cube);
+  if !pieces.iter().all(|c| cycle_len(&c) == 1)
+    || pieces.iter().filter(|c| cycle_len(&c) == 1).count() % 2 != 0
+  {
+    return None;
+  }
+
+  let cycle = [pieces[0][1], pieces[1][1]];
+  let mut next_cube = state.cube.clone();
+  exec_2twist(&mut next_cube, cycle);
   Some((cycle.to_vec(), State { cube: next_cube }))
 }
 
@@ -57,6 +85,37 @@ mod tests {
     assert_eq!(
       Some((
         vec![UF, DF, UB],
+        State {
+          cube: StickerCube::solved()
+        }
+      )),
+      result
+    );
+  }
+
+  #[test]
+  fn basic_2twist() {
+    let mut c = StickerCube::solved();
+    c.set_corner(URF, FUR);
+    c.set_corner(UFL, FLU);
+    let result = try_2twist(&State { cube: c });
+    assert_eq!(
+      Some((
+        vec![FUR, FLU],
+        State {
+          cube: StickerCube::solved()
+        }
+      )),
+      result
+    );
+
+    let mut c = StickerCube::solved();
+    c.set_edge(UF, FU);
+    c.set_edge(UR, RU);
+    let result = try_2twist(&State { cube: c });
+    assert_eq!(
+      Some((
+        vec![FU, RU],
         State {
           cube: StickerCube::solved()
         }

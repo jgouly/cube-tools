@@ -42,11 +42,11 @@ fn solve_pieces<P: Piece + std::fmt::Debug>(
 }
 
 fn solve_corners(state: &State) -> Vec<Vec<CornerPos>> {
-  solve_pieces(state, &[try_3cycle])
+  solve_pieces(state, &[try_3cycle, try_2twist])
 }
 
 fn solve_edges(state: &State) -> Vec<Vec<EdgePos>> {
-  solve_pieces(state, &[try_3cycle])
+  solve_pieces(state, &[try_3cycle, try_2twist])
 }
 
 #[cfg(test)]
@@ -81,5 +81,37 @@ mod tests {
     exec_3cycle(&mut c, [UF, DB, UR]);
     let result = solve_edges(&State { cube: c });
     assert_eq!(vec![vec![UF, UR, DB], vec![UF, LD, DF]], result);
+  }
+
+  #[test]
+  fn basic_corner_2twist() {
+    let mut c = StickerCube::solved();
+    exec_3cycle(&mut c, [URF, ULB, UFL]);
+    exec_3cycle(&mut c, [URF, UFL, LBU]);
+    let result = solve_corners(&State { cube: c });
+    assert_eq!(vec![vec![RFU, BUL]], result);
+
+    let mut c = StickerCube::solved();
+    exec_3cycle(&mut c, [URF, ULB, UFL]);
+    exec_3cycle(&mut c, [URF, UFL, LBU]);
+    exec_3cycle(&mut c, [URF, UFL, UBR]);
+    let result = solve_corners(&State { cube: c });
+    assert_eq!(vec![vec![URF, UBR, UFL], vec![RFU, BUL]], result);
+  }
+
+  #[test]
+  fn basic_edge_2twist() {
+    let mut c = StickerCube::solved();
+    exec_3cycle(&mut c, [UF, UL, UR]);
+    exec_3cycle(&mut c, [UF, RU, LU]);
+    let result = solve_edges(&State { cube: c });
+    assert_eq!(vec![vec![FU, RU]], result);
+
+    let mut c = StickerCube::solved();
+    exec_3cycle(&mut c, [UF, UL, UR]);
+    exec_3cycle(&mut c, [UF, RU, LU]);
+    exec_3cycle(&mut c, [UF, UB, UL]);
+    let result = solve_edges(&State { cube: c });
+    assert_eq!(vec![vec![UF, UL, UB], vec![FU, RU]], result);
   }
 }
