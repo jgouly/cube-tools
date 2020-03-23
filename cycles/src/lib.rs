@@ -4,6 +4,7 @@ use cube::{CornerPos, EdgePos};
 pub trait Piece: PartialEq + Copy {
   fn oriented_iter() -> Box<dyn Iterator<Item = Self>>;
   fn lookup(cube: &StickerCube, p: Self) -> Self;
+  fn set(cube: &mut StickerCube, p0: Self, p1: Self);
   fn orient(&self) -> Self;
 }
 
@@ -14,6 +15,10 @@ impl Piece for EdgePos {
 
   fn lookup(cube: &StickerCube, p: Self) -> Self {
     cube.edge(p)
+  }
+
+  fn set(cube: &mut StickerCube, p0: Self, p1: Self) {
+    cube.set_edge(p0, p1)
   }
 
   fn orient(&self) -> Self {
@@ -28,6 +33,10 @@ impl Piece for CornerPos {
 
   fn lookup(cube: &StickerCube, p: Self) -> Self {
     cube.corner(p)
+  }
+
+  fn set(cube: &mut StickerCube, p0: Self, p1: Self) {
+    cube.set_corner(p0, p1)
   }
 
   fn orient(&self) -> Self {
