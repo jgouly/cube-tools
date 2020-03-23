@@ -2,6 +2,7 @@
 
 members = [
     "alg-list-gen",
+    "bld-solver",
     "cube",
     "cycles",
 ]
