@@ -99,6 +99,15 @@ pub fn get_piece_cycles<T: Piece>(c: &StickerCube) -> Vec<Vec<T>> {
   cycles
 }
 
+pub fn cycle_len<P: Piece>(cycle: &[P]) -> usize {
+  let offset = if Some(cycle[0].orient()) == cycle.last().map(|p| p.orient()) {
+    1
+  } else {
+    0
+  };
+  cycle.len() - offset
+}
+
 #[cfg(test)]
 mod tests {
   use super::*;
@@ -153,5 +162,18 @@ mod tests {
       vec![vec![UL, UR]],
       vec![vec![URF, UBR]]
     );
+  }
+
+  #[test]
+  fn test_len() {
+    assert_eq!(1, cycle_len(&[UF, FU]));
+    assert_eq!(2, cycle_len(&[UF, UL]));
+    assert_eq!(3, cycle_len(&[UF, UL, UR]));
+    assert_eq!(3, cycle_len(&[UF, UL, UR, FU]));
+
+    assert_eq!(1, cycle_len(&[URF, FUR]));
+    assert_eq!(2, cycle_len(&[URF, UFL]));
+    assert_eq!(3, cycle_len(&[URF, UFL, ULB]));
+    assert_eq!(3, cycle_len(&[URF, UFL, ULB, FUR]));
   }
 }
