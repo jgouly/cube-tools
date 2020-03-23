@@ -143,6 +143,38 @@ impl TryFrom<(Face, Face)> for EdgePos {
   }
 }
 
+impl From<EdgePos> for (Face, Face) {
+  fn from(c: EdgePos) -> (Face, Face) {
+    use Face::*;
+    match c {
+      EdgePos::UF => (U, F),
+      EdgePos::FU => (F, U),
+      EdgePos::UL => (U, L),
+      EdgePos::LU => (L, U),
+      EdgePos::UB => (U, B),
+      EdgePos::BU => (B, U),
+      EdgePos::UR => (U, R),
+      EdgePos::RU => (R, U),
+      EdgePos::DF => (D, F),
+      EdgePos::FD => (F, D),
+      EdgePos::DL => (D, L),
+      EdgePos::LD => (L, D),
+      EdgePos::DB => (D, B),
+      EdgePos::BD => (B, D),
+      EdgePos::DR => (D, R),
+      EdgePos::RD => (R, D),
+      EdgePos::FR => (F, R),
+      EdgePos::RF => (R, F),
+      EdgePos::FL => (F, L),
+      EdgePos::LF => (L, F),
+      EdgePos::BL => (B, L),
+      EdgePos::LB => (L, B),
+      EdgePos::BR => (B, R),
+      EdgePos::RB => (R, B),
+    }
+  }
+}
+
 #[cfg(test)]
 mod tests {
   use super::*;
@@ -163,6 +195,15 @@ mod tests {
     assert_eq!(Ok(EdgePos::FU), EdgePos::try_from((Face::F, Face::U)));
     assert_eq!(Err(()), EdgePos::try_from((Face::U, Face::U)));
     assert_eq!(Err(()), EdgePos::try_from((Face::D, Face::U)));
+  }
+
+  #[test]
+  fn exhaustive_edge_from() {
+    for e0 in EdgePos::iter() {
+      let (f0, f1) = e0.into();
+      let e1 = EdgePos::try_from((f0, f1)).unwrap();
+      assert_eq!(e1, e0);
+    }
   }
 
   #[test]
