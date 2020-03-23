@@ -87,6 +87,13 @@ impl StickerCube {
     CornerPos::try_from((f0, f1, f2)).unwrap()
   }
 
+  pub fn set_corner(&mut self, e0: CornerPos, e1: CornerPos) {
+    let (f0, f1, f2) = e1.into();
+    self[e0] = self.face_to_sticker(f0);
+    self[e0.clockwise_pos()] = self.face_to_sticker(f1);
+    self[e0.anti_clockwise_pos()] = self.face_to_sticker(f2);
+  }
+
   /// Returns the [EdgePos] at position `e`.
   pub fn edge(&self, e: EdgePos) -> EdgePos {
     let s0 = self[e];
@@ -94,6 +101,12 @@ impl StickerCube {
     let f0 = self.sticker_to_face(s0);
     let f1 = self.sticker_to_face(s1);
     EdgePos::try_from((f0, f1)).unwrap()
+  }
+
+  pub fn set_edge(&mut self, e0: EdgePos, e1: EdgePos) {
+    let (f0, f1) = e1.into();
+    self[e0] = self.face_to_sticker(f0);
+    self[e0.flip()] = self.face_to_sticker(f1);
   }
 
   fn sticker_to_face(&self, s: Sticker) -> Face {
@@ -105,6 +118,17 @@ impl StickerCube {
       _ if s == self[CentrePos::B] => Face::B,
       _ if s == self[CentrePos::L] => Face::L,
       _ => unreachable!("{:?}", s),
+    }
+  }
+
+  fn face_to_sticker(&self, f: Face) -> Sticker {
+    match f {
+      Face::U => self[CentrePos::U],
+      Face::R => self[CentrePos::R],
+      Face::F => self[CentrePos::F],
+      Face::D => self[CentrePos::D],
+      Face::B => self[CentrePos::B],
+      Face::L => self[CentrePos::L],
     }
   }
 
@@ -347,6 +371,27 @@ mod tests {
 
     for c in CornerPos::iter() {
       assert_eq!(c, cu.corner(c));
+    }
+  }
+
+  #[test]
+  fn piece_set() {
+    {
+      let mut c = StickerCube::solved();
+      c.set_corner(URF, UBR);
+      assert_eq!(UBR, c.corner(URF));
+
+      c.set_corner(URF, RFU);
+      assert_eq!(RFU, c.corner(URF));
+    }
+
+    {
+      let mut c = StickerCube::solved();
+      c.set_edge(UF, UB);
+      assert_eq!(UB, c.edge(UF));
+
+      c.set_edge(UF, FU);
+      assert_eq!(FU, c.edge(UF));
     }
   }
 
