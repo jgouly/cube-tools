@@ -42,11 +42,22 @@ fn solve_pieces<P: Piece + std::fmt::Debug>(
 }
 
 fn solve_corners(state: &State) -> Vec<Vec<CornerPos>> {
-  solve_pieces(state, &[try_3cycle, try_corner_3twist, try_2twist])
+  solve_pieces(
+    state,
+    &[
+      try_3cycle,
+      try_buffer_in_place_cycle_break,
+      try_corner_3twist,
+      try_2twist,
+    ],
+  )
 }
 
 fn solve_edges(state: &State) -> Vec<Vec<EdgePos>> {
-  solve_pieces(state, &[try_3cycle, try_2twist])
+  solve_pieces(
+    state,
+    &[try_3cycle, try_buffer_in_place_cycle_break, try_2twist],
+  )
 }
 
 #[cfg(test)]

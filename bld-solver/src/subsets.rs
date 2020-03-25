@@ -82,6 +82,39 @@ pub(crate) fn try_corner_3twist(
   Some((cycle.to_vec(), State { cube: next_cube }))
 }
 
+fn break_into_non_twist<P: Piece>(cycles: &[Vec<P>]) -> Option<usize> {
+  for (i, c) in cycles.iter().enumerate() {
+    if cycle_len(c) != 1 {
+      return Some(i);
+    }
+  }
+
+  None
+}
+
+pub(crate) fn try_buffer_in_place_cycle_break<P: Piece + std::fmt::Debug>(
+  state: &State,
+) -> Option<(Vec<P>, State)> {
+  let c = &state.cube;
+
+  let buffer = P::oriented_iter().next().unwrap();
+  if P::lookup(c, buffer).orient() != buffer.orient() {
+    return None;
+  }
+
+  let pieces = get_piece_cycles(c);
+
+  let break_idx = break_into_non_twist(&pieces);
+  let cycle_break = pieces[break_idx?][0];
+
+  let p0 = P::lookup(c, cycle_break);
+
+  let cycle = [buffer, cycle_break, p0];
+  let mut next_cube = c.clone();
+  exec_3cycle(&mut next_cube, cycle);
+  Some((cycle.to_vec(), State { cube: next_cube }))
+}
+
 #[cfg(test)]
 mod tests {
   use super::*;
@@ -164,5 +197,39 @@ mod tests {
       )),
       result
     );
+  }
+
+  #[test]
+  fn test_cycle_break_index() {
+    let corners = vec![vec![URF, FUR], vec![UFL, ULB, UBR]];
+    assert_eq!(Some(1), break_into_non_twist(&corners));
+  }
+
+  #[test]
+  fn test_buffer_in_place_cycle_break() {
+    let mut c = StickerCube::solved();
+    exec_3cycle(&mut c, [UFL, RDF, LDB]);
+
+    let mut expected = StickerCube::solved();
+    exec_3cycle(&mut expected, [URF, UFL, RDF]);
+
+    let result = try_buffer_in_place_cycle_break(&State { cube: c });
+    assert_eq!(
+      Some((vec![URF, UFL, LDB], State { cube: expected })),
+      result
+    );
+
+    let mut c = StickerCube::solved();
+    c.set_edge(UF, FU);
+    c.set_edge(UR, RU);
+    exec_3cycle(&mut c, [UL, UB, DR]);
+
+    let mut expected = StickerCube::solved();
+    expected.set_edge(UF, FU);
+    expected.set_edge(UR, RU);
+    exec_3cycle(&mut expected, [UF, UL, UB]);
+
+    let result = try_buffer_in_place_cycle_break(&State { cube: c });
+    assert_eq!(Some((vec![UF, UL, DR], State { cube: expected })), result);
   }
 }
