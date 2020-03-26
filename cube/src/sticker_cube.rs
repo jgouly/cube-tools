@@ -44,6 +44,67 @@ impl StickerCube {
     }
   }
 
+  fn is_valid(&self) -> bool {
+    let (corners, total_orientation): (Vec<_>, usize) =
+      CornerPos::oriented_iter().fold((vec![], 0), |(mut acc, o), c| {
+        let corner = self.corner(c);
+        let num_rotations = if corner == corner.orient() {
+          0
+        } else if corner.anti_clockwise_pos() == corner.orient() {
+          1
+        } else {
+          assert_eq!(corner.clockwise_pos(), corner.orient());
+          2
+        };
+
+        acc.push(corner);
+        (acc, o + num_rotations)
+      });
+
+    if total_orientation % 3 != 0 {
+      return false;
+    }
+
+    let (edges, total_orientation): (Vec<_>, usize) = EdgePos::oriented_iter()
+      .fold((vec![], 0), |(mut acc, o), c| {
+        let edge = self.edge(c);
+        let num_rotations = if edge == edge.orient() {
+          0
+        } else {
+          assert_eq!(edge.flip(), edge.orient());
+          1
+        };
+
+        acc.push(edge);
+        (acc, o + num_rotations)
+      });
+
+    if total_orientation % 2 != 0 {
+      return false;
+    }
+
+    fn num_inversions<P: PartialOrd>(perm: &[P]) -> usize {
+      let mut num = 0;
+      for i in 0..perm.len() - 1 {
+        for j in i + 1..perm.len() {
+          if perm[i] > perm[j] {
+            num += 1;
+          }
+        }
+      }
+      num
+    }
+
+    let cp = num_inversions(&corners) % 2 != 0;
+    let ep = num_inversions(&edges) % 2 != 0;
+
+    if cp != ep {
+      return false;
+    }
+
+    true
+  }
+
   pub fn corners_solved(&self) -> bool {
     use CornerPos::*;
     let sticker_check = |pos: &[CornerPos], centre: CentrePos| {
@@ -175,6 +236,7 @@ impl StickerCube {
         }
       }
     }
+    assert!(self.is_valid());
   }
 
   fn do_u(&mut self) {
@@ -392,6 +454,32 @@ mod tests {
       c.set_edge(UF, FU);
       assert_eq!(FU, c.edge(UF));
     }
+  }
+
+  #[test]
+  fn test_validity() {
+    let mut c = StickerCube::solved();
+    assert!(c.is_valid());
+
+    c.set_corner(URF, FUR);
+    assert!(!c.is_valid());
+
+    c.set_corner(UBR, BRU);
+    assert!(c.is_valid());
+
+    let mut c = StickerCube::solved();
+    c.set_edge(UF, FU);
+    assert!(!c.is_valid());
+
+    let mut c = StickerCube::solved();
+    c.set_corner(URF, UBR);
+    c.set_corner(UBR, URF);
+    assert!(!c.is_valid());
+
+    let mut c = StickerCube::solved();
+    c.set_edge(UF, UR);
+    c.set_edge(UR, UF);
+    assert!(!c.is_valid());
   }
 
   #[test]

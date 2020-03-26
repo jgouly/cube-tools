@@ -2,7 +2,7 @@ use crate::Face;
 use std::convert::TryFrom;
 
 /// Represents a particular edge position on a cube.
-#[derive(Clone, Copy, Debug, PartialEq)]
+#[derive(Clone, Copy, Debug, PartialEq, PartialOrd)]
 pub enum EdgePos {
   UF,
   FU,

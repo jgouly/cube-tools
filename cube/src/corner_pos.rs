@@ -2,7 +2,7 @@ use crate::Face;
 use std::convert::TryFrom;
 
 /// Represents a particular corner position on a cube.
-#[derive(Clone, Copy, Debug, PartialEq)]
+#[derive(Clone, Copy, Debug, PartialEq, PartialOrd)]
 pub enum CornerPos {
   URF,
   RFU,
