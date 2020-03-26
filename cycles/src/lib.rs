@@ -100,6 +100,7 @@ pub fn get_piece_cycles<T: Piece>(c: &StickerCube) -> Vec<Vec<T>> {
 }
 
 pub fn cycle_len<P: Piece>(cycle: &[P]) -> usize {
+  assert!(!cycle.is_empty());
   let offset = if Some(cycle[0].orient()) == cycle.last().map(|p| p.orient()) {
     1
   } else {

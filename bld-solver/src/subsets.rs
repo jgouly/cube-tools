@@ -1,5 +1,5 @@
 use crate::State;
-use cube::{CornerPos, StickerCube};
+use cube::{CornerPos, EdgePos, StickerCube};
 use cycles::{cycle_len, get_piece_cycles, Piece};
 
 pub(crate) fn exec_3cycle<P: Piece + std::fmt::Debug>(
@@ -146,6 +146,44 @@ pub(crate) fn try_cycle_break<P: Piece + std::fmt::Debug>(
   Some((cycle.to_vec(), State { cube: next_cube }))
 }
 
+fn exec_parity(
+  c: &mut StickerCube,
+  corners: [CornerPos; 2],
+  edges: [EdgePos; 2],
+) {
+  let c0 = c.corner(corners[0]);
+  let c1 = c.corner(corners[1]);
+  c.set_corner(corners[0], c1);
+  c.set_corner(corners[1], c0);
+
+  let e0 = c.edge(edges[0]);
+  let e1 = c.edge(edges[1]);
+  c.set_edge(edges[0], e1);
+  c.set_edge(edges[1], e0);
+}
+
+pub(crate) fn try_parity(state: &State) -> Option<(Vec<CornerPos>, State)> {
+  let c = &state.cube;
+
+  let corners = get_piece_cycles::<CornerPos>(&c);
+  if corners.iter().any(|c| cycle_len(c) > 2)
+    || corners.iter().filter(|c| cycle_len(c) == 2).count() != 1
+  {
+    return None;
+  }
+
+  let buffer = CornerPos::URF;
+  let p0 = c.corner(buffer);
+  if buffer.orient() == p0.orient() {
+    return None;
+  }
+
+  let cycle = [buffer, p0];
+  let mut next_cube = c.clone();
+  exec_parity(&mut next_cube, cycle, [EdgePos::UF, EdgePos::UR]);
+  Some((cycle.to_vec(), State { cube: next_cube }))
+}
+
 #[cfg(test)]
 mod tests {
   use super::*;
@@ -282,6 +320,43 @@ mod tests {
     let result = try_cycle_break(&State { cube: c });
     assert_eq!(
       Some((vec![URF, UBR, UFL], State { cube: expected })),
+      result
+    );
+  }
+
+  #[test]
+  fn test_parity() {
+    let mut c = StickerCube::solved();
+    c.set_corner(URF, UBR);
+    c.set_corner(UBR, URF);
+    c.set_edge(UF, UR);
+    c.set_edge(UR, UF);
+
+    let result = try_parity(&State { cube: c });
+    assert_eq!(
+      Some((
+        vec![URF, UBR],
+        State {
+          cube: StickerCube::solved()
+        }
+      )),
+      result
+    );
+
+    let mut c = StickerCube::solved();
+    c.set_corner(URF, FLU);
+    c.set_corner(FLU, URF);
+    c.set_edge(UF, UR);
+    c.set_edge(UR, UF);
+
+    let result = try_parity(&State { cube: c });
+    assert_eq!(
+      Some((
+        vec![URF, FLU],
+        State {
+          cube: StickerCube::solved()
+        }
+      )),
       result
     );
   }

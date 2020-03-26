@@ -46,6 +46,7 @@ fn solve_corners(state: &State) -> Vec<Vec<CornerPos>> {
     state,
     &[
       try_3cycle,
+      try_parity,
       try_buffer_in_place_cycle_break,
       try_cycle_break,
       try_corner_3twist,
@@ -166,5 +167,17 @@ mod tests {
 
     let result = solve_edges(&State { cube: c });
     assert_eq!(vec![vec![UF, UR, UL], vec![UF, UB, UL]], result);
+  }
+
+  #[test]
+  fn test_parity() {
+    let mut c = StickerCube::solved();
+    c.set_corner(URF, LDB);
+    c.set_corner(LDB, URF);
+    c.set_edge(UF, UR);
+    c.set_edge(UR, UF);
+
+    let result = solve_corners(&State { cube: c });
+    assert_eq!(vec![vec![URF, LDB]], result);
   }
 }
