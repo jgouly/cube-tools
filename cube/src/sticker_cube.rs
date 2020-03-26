@@ -44,7 +44,7 @@ impl StickerCube {
     }
   }
 
-  fn is_valid(&self) -> bool {
+  pub fn is_valid(&self) -> bool {
     let (corners, total_orientation): (Vec<_>, usize) =
       CornerPos::oriented_iter().fold((vec![], 0), |(mut acc, o), c| {
         let corner = self.corner(c);
