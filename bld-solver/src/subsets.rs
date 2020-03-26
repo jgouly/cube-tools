@@ -82,8 +82,15 @@ pub(crate) fn try_corner_3twist(
   Some((cycle.to_vec(), State { cube: next_cube }))
 }
 
-fn break_into_non_twist<P: Piece>(cycles: &[Vec<P>]) -> Option<usize> {
+fn break_into_non_twist<P: Piece>(
+  cycles: &[Vec<P>],
+  buffer_idx: Option<usize>,
+) -> Option<usize> {
   for (i, c) in cycles.iter().enumerate() {
+    if Some(i) == buffer_idx {
+      continue;
+    }
+
     if cycle_len(c) != 1 {
       return Some(i);
     }
@@ -104,12 +111,36 @@ pub(crate) fn try_buffer_in_place_cycle_break<P: Piece + std::fmt::Debug>(
 
   let pieces = get_piece_cycles(c);
 
-  let break_idx = break_into_non_twist(&pieces);
+  let break_idx = break_into_non_twist(&pieces, None);
   let cycle_break = pieces[break_idx?][0];
 
   let p0 = P::lookup(c, cycle_break);
 
   let cycle = [buffer, cycle_break, p0];
+  let mut next_cube = c.clone();
+  exec_3cycle(&mut next_cube, cycle);
+  Some((cycle.to_vec(), State { cube: next_cube }))
+}
+
+pub(crate) fn try_cycle_break<P: Piece + std::fmt::Debug>(
+  state: &State,
+) -> Option<(Vec<P>, State)> {
+  let c = &state.cube;
+
+  let pieces = get_piece_cycles::<P>(&c);
+  let buffer = P::oriented_iter().next().unwrap();
+  let buffer_idx = pieces.iter().position(|p| p[0] == buffer)?;
+
+  if cycle_len(&pieces[buffer_idx]) != 2 || pieces.len() < 2 {
+    return None;
+  }
+
+  let p0 = P::lookup(c, buffer);
+
+  let break_idx = break_into_non_twist(&pieces, Some(buffer_idx));
+  let cycle_break = pieces[break_idx?][0];
+
+  let cycle = [buffer, p0, cycle_break];
   let mut next_cube = c.clone();
   exec_3cycle(&mut next_cube, cycle);
   Some((cycle.to_vec(), State { cube: next_cube }))
@@ -202,7 +233,13 @@ mod tests {
   #[test]
   fn test_cycle_break_index() {
     let corners = vec![vec![URF, FUR], vec![UFL, ULB, UBR]];
-    assert_eq!(Some(1), break_into_non_twist(&corners));
+    assert_eq!(Some(1), break_into_non_twist(&corners, None));
+
+    let corners = vec![vec![URF, UBR], vec![UFL, ULB, DRB]];
+    assert_eq!(Some(1), break_into_non_twist(&corners, Some(0)));
+
+    let corners = vec![vec![URF, UBR], vec![UFL, FLU], vec![ULB, DBL, DRB]];
+    assert_eq!(Some(2), break_into_non_twist(&corners, Some(0)));
   }
 
   #[test]
@@ -231,5 +268,21 @@ mod tests {
 
     let result = try_buffer_in_place_cycle_break(&State { cube: c });
     assert_eq!(Some((vec![UF, UL, DR], State { cube: expected })), result);
+  }
+
+  #[test]
+  fn test_cycle_break() {
+    let mut c = StickerCube::solved();
+    exec_3cycle(&mut c, [URF, UBR, ULB]);
+    exec_3cycle(&mut c, [URF, UFL, ULB]);
+
+    let mut expected = StickerCube::solved();
+    exec_3cycle(&mut expected, [URF, UFL, ULB]);
+
+    let result = try_cycle_break(&State { cube: c });
+    assert_eq!(
+      Some((vec![URF, UBR, UFL], State { cube: expected })),
+      result
+    );
   }
 }

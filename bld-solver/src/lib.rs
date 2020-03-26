@@ -47,6 +47,7 @@ fn solve_corners(state: &State) -> Vec<Vec<CornerPos>> {
     &[
       try_3cycle,
       try_buffer_in_place_cycle_break,
+      try_cycle_break,
       try_corner_3twist,
       try_2twist,
     ],
@@ -56,7 +57,12 @@ fn solve_corners(state: &State) -> Vec<Vec<CornerPos>> {
 fn solve_edges(state: &State) -> Vec<Vec<EdgePos>> {
   solve_pieces(
     state,
-    &[try_3cycle, try_buffer_in_place_cycle_break, try_2twist],
+    &[
+      try_3cycle,
+      try_buffer_in_place_cycle_break,
+      try_cycle_break,
+      try_2twist,
+    ],
   )
 }
 
@@ -140,5 +146,25 @@ mod tests {
     exec_3cycle(&mut c, [URF, DLF, DRB]);
     let result = solve_corners(&State { cube: c });
     assert_eq!(vec![vec![URF, DRB, DLF], vec![FUR, BUL, RUB]], result);
+  }
+
+  #[test]
+  fn test_2c2c() {
+    let mut c = StickerCube::solved();
+    exec_3cycle(&mut c, [URF, UBR, ULB]);
+    exec_3cycle(&mut c, [URF, UFL, ULB]);
+
+    let result = solve_corners(&State { cube: c });
+    assert_eq!(vec![vec![URF, UBR, UFL], vec![URF, ULB, UFL]], result);
+  }
+
+  #[test]
+  fn test_2e2e() {
+    let mut c = StickerCube::solved();
+    exec_3cycle(&mut c, [UF, UR, UB]);
+    exec_3cycle(&mut c, [UF, UL, UB]);
+
+    let result = solve_edges(&State { cube: c });
+    assert_eq!(vec![vec![UF, UR, UL], vec![UF, UB, UL]], result);
   }
 }
