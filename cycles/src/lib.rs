@@ -6,6 +6,8 @@ pub trait Piece: PartialEq + Copy {
   fn lookup(cube: &StickerCube, p: Self) -> Self;
   fn set(cube: &mut StickerCube, p0: Self, p1: Self);
   fn orient(&self) -> Self;
+  fn rotate(&self) -> Self;
+  fn num_rotations(&self) -> usize;
   fn solved(cube: &StickerCube) -> bool;
 }
 
@@ -24,6 +26,18 @@ impl Piece for EdgePos {
 
   fn orient(&self) -> Self {
     (*self).orient()
+  }
+
+  fn rotate(&self) -> Self {
+    self.flip()
+  }
+
+  fn num_rotations(&self) -> usize {
+    if self == &self.orient() {
+      0
+    } else {
+      1
+    }
   }
 
   fn solved(cube: &StickerCube) -> bool {
@@ -46,6 +60,21 @@ impl Piece for CornerPos {
 
   fn orient(&self) -> Self {
     (*self).orient()
+  }
+
+  fn rotate(&self) -> Self {
+    self.anti_clockwise_pos()
+  }
+
+  fn num_rotations(&self) -> usize {
+    if self == &self.orient() {
+      0
+    } else if self.anti_clockwise_pos() == self.orient() {
+      1
+    } else {
+      assert_eq!(self.clockwise_pos(), self.orient());
+      2
+    }
   }
 
   fn solved(cube: &StickerCube) -> bool {
@@ -176,5 +205,20 @@ mod tests {
     assert_eq!(2, cycle_len(&[URF, UFL]));
     assert_eq!(3, cycle_len(&[URF, UFL, ULB]));
     assert_eq!(3, cycle_len(&[URF, UFL, ULB, FUR]));
+  }
+
+  #[test]
+  fn piece_rotations() {
+    assert_eq!(FUR, URF.rotate());
+    assert_eq!(URF, RFU.rotate());
+
+    assert_eq!(FU, UF.rotate());
+
+    assert_eq!(0, URF.num_rotations());
+    assert_eq!(1, RFU.num_rotations());
+    assert_eq!(2, FUR.num_rotations());
+
+    assert_eq!(0, UR.num_rotations());
+    assert_eq!(1, LB.num_rotations());
   }
 }
