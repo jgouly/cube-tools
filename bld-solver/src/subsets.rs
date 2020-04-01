@@ -39,15 +39,39 @@ pub(crate) fn try_3cycle<P: Piece + std::fmt::Debug>(
 
 fn exec_2twist<P: Piece + std::fmt::Debug>(c: &mut StickerCube, cycle: [P; 2]) {
   assert_ne!(cycle[0].orient(), cycle[1].orient());
-  P::set(c, cycle[0].orient(), cycle[0].orient());
-  P::set(c, cycle[1].orient(), cycle[1].orient());
+  P::set(c, cycle[0], P::lookup(c, cycle[0].orient()));
+  P::set(c, cycle[1], P::lookup(c, cycle[1].orient()));
   assert!(c.is_valid());
 }
 
-pub(crate) fn try_2twist<P: Piece + std::fmt::Debug>(
+pub(crate) fn try_corner_2twist(
   state: &State,
-) -> Option<(Vec<P>, State)> {
-  let pieces = get_piece_cycles::<P>(&state.cube);
+) -> Option<(Vec<CornerPos>, State)> {
+  let pieces = get_piece_cycles::<CornerPos>(&state.cube);
+  if !pieces.iter().all(|c| cycle_len(&c) == 1)
+    || pieces.iter().filter(|c| cycle_len(&c) == 1).count() % 2 != 0
+  {
+    return None;
+  }
+
+  let mut cycle = [pieces[0][1], pieces[1][1]];
+
+  // Ensure that this is a valid 2 twist.
+  if cycle[0].num_rotations() == cycle[1].num_rotations() {
+    cycle[0] = if cycle[0] == cycle[0].orient().clockwise_pos() {
+      cycle[0].orient().anti_clockwise_pos()
+    } else {
+      cycle[0].orient().clockwise_pos()
+    }
+  }
+
+  let mut next_cube = state.cube.clone();
+  exec_2twist(&mut next_cube, cycle);
+  Some((cycle.to_vec(), State { cube: next_cube }))
+}
+
+pub(crate) fn try_edge_2flip(state: &State) -> Option<(Vec<EdgePos>, State)> {
+  let pieces = get_piece_cycles::<EdgePos>(&state.cube);
   if !pieces.iter().all(|c| cycle_len(&c) == 1)
     || pieces.iter().filter(|c| cycle_len(&c) == 1).count() % 2 != 0
   {
@@ -228,7 +252,7 @@ mod tests {
     let mut c = StickerCube::solved();
     c.set_corner(URF, FUR);
     c.set_corner(UFL, FLU);
-    let result = try_2twist(&State { cube: c });
+    let result = try_corner_2twist(&State { cube: c });
     assert_eq!(
       Some((
         vec![FUR, FLU],
@@ -240,9 +264,23 @@ mod tests {
     );
 
     let mut c = StickerCube::solved();
+    c.set_corner(URF, RFU);
+    c.set_corner(UFL, FLU);
+    c.set_corner(ULB, BUL);
+    c.set_corner(UBR, RUB);
+
+    let mut expected = StickerCube::solved();
+    expected.set_corner(URF, FUR);
+    expected.set_corner(ULB, BUL);
+    expected.set_corner(UBR, RUB);
+
+    let result = try_corner_2twist(&State { cube: c });
+    assert_eq!(Some((vec![FUR, FLU], State { cube: expected })), result);
+
+    let mut c = StickerCube::solved();
     c.set_edge(UF, FU);
     c.set_edge(UR, RU);
-    let result = try_2twist(&State { cube: c });
+    let result = try_edge_2flip(&State { cube: c });
     assert_eq!(
       Some((
         vec![FU, RU],
