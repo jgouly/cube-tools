@@ -1,5 +1,3 @@
-#![allow(dead_code)]
-
 use cube::{CornerPos, EdgePos, StickerCube};
 use cycles::{get_piece_cycles, Piece};
 
@@ -67,8 +65,33 @@ fn solve_edges(state: &State) -> Vec<Vec<EdgePos>> {
   )
 }
 
+// This checks if a cube is valid, taking into account the fact that parity
+// swap may have happened.
 fn is_valid(c: &StickerCube) -> bool {
-  c.is_valid()
+  if !c.is_valid() {
+    // If parity swap happened, the cube will have corner parity, but not
+    // edge parity.
+    c.corner_parity() && !c.edge_parity()
+  } else {
+    true
+  }
+}
+
+pub fn solve(cube: &StickerCube) -> (Vec<Vec<EdgePos>>, Vec<Vec<CornerPos>>) {
+  let mut cube = cube.clone();
+
+  let edge_memo_swap = (EdgePos::UF, EdgePos::UR);
+  if cube.corner_parity() {
+    let a = cube.position_of(edge_memo_swap.0);
+    let b = cube.position_of(edge_memo_swap.1);
+    cube.set_edge(a, edge_memo_swap.1);
+    cube.set_edge(b, edge_memo_swap.0);
+  }
+
+  (
+    solve_edges(&State { cube: cube.clone() }),
+    solve_corners(&State { cube: cube.clone() }),
+  )
 }
 
 #[cfg(test)]
@@ -181,5 +204,15 @@ mod tests {
 
     let result = solve_corners(&State { cube: c });
     assert_eq!(vec![vec![URF, LDB]], result);
+
+    let mut c = StickerCube::solved();
+    c.set_corner(URF, LDB);
+    c.set_corner(LDB, URF);
+    c.set_edge(UF, UR);
+    c.set_edge(UR, UF);
+
+    let (e, c) = solve(&c);
+    assert_eq!(vec![vec![URF, LDB]], c);
+    assert_eq!(0, e.len());
   }
 }
