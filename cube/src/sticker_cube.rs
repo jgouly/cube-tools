@@ -44,61 +44,54 @@ impl StickerCube {
     }
   }
 
-  pub fn is_valid(&self) -> bool {
-    let (corners, total_orientation): (Vec<_>, usize) =
-      CornerPos::oriented_iter().fold((vec![], 0), |(mut acc, o), c| {
-        let corner = self.corner(c);
-        let num_rotations = if corner == corner.orient() {
-          0
-        } else if corner.anti_clockwise_pos() == corner.orient() {
-          1
-        } else {
-          assert_eq!(corner.clockwise_pos(), corner.orient());
-          2
-        };
+  pub fn corner_parity(&self) -> bool {
+    let corners: Vec<_> =
+      CornerPos::oriented_iter().map(|c| self.corner(c)).collect();
+    num_inversions(&corners) % 2 != 0
+  }
 
-        acc.push(corner);
-        (acc, o + num_rotations)
-      });
+  pub fn edge_parity(&self) -> bool {
+    let edges: Vec<_> =
+      EdgePos::oriented_iter().map(|c| self.edge(c)).collect();
+    num_inversions(&edges) % 2 != 0
+  }
+
+  pub fn is_valid(&self) -> bool {
+    let total_orientation = CornerPos::oriented_iter().fold(0, |o, c| {
+      let corner = self.corner(c);
+      let num_rotations = if corner == corner.orient() {
+        0
+      } else if corner.anti_clockwise_pos() == corner.orient() {
+        1
+      } else {
+        assert_eq!(corner.clockwise_pos(), corner.orient());
+        2
+      };
+
+      o + num_rotations
+    });
 
     if total_orientation % 3 != 0 {
       return false;
     }
 
-    let (edges, total_orientation): (Vec<_>, usize) = EdgePos::oriented_iter()
-      .fold((vec![], 0), |(mut acc, o), c| {
-        let edge = self.edge(c);
-        let num_rotations = if edge == edge.orient() {
-          0
-        } else {
-          assert_eq!(edge.flip(), edge.orient());
-          1
-        };
+    let total_orientation = EdgePos::oriented_iter().fold(0, |o, c| {
+      let edge = self.edge(c);
+      let num_rotations = if edge == edge.orient() {
+        0
+      } else {
+        assert_eq!(edge.flip(), edge.orient());
+        1
+      };
 
-        acc.push(edge);
-        (acc, o + num_rotations)
-      });
+      o + num_rotations
+    });
 
     if total_orientation % 2 != 0 {
       return false;
     }
 
-    fn num_inversions<P: PartialOrd>(perm: &[P]) -> usize {
-      let mut num = 0;
-      for i in 0..perm.len() - 1 {
-        for j in i + 1..perm.len() {
-          if perm[i] > perm[j] {
-            num += 1;
-          }
-        }
-      }
-      num
-    }
-
-    let cp = num_inversions(&corners) % 2 != 0;
-    let ep = num_inversions(&edges) % 2 != 0;
-
-    if cp != ep {
+    if self.corner_parity() != self.edge_parity() {
       return false;
     }
 
@@ -416,6 +409,18 @@ pos_index!(EdgePos, edges);
 pos_index!(CentrePos, centres);
 pos_index!(CornerPos, corners);
 
+fn num_inversions<P: PartialOrd>(perm: &[P]) -> usize {
+  let mut num = 0;
+  for i in 0..perm.len() - 1 {
+    for j in i + 1..perm.len() {
+      if perm[i] > perm[j] {
+        num += 1;
+      }
+    }
+  }
+  num
+}
+
 #[cfg(test)]
 mod tests {
   use super::*;
@@ -507,6 +512,20 @@ mod tests {
     for e in EdgePos::iter() {
       assert_eq!(e, c.position_of(e));
     }
+  }
+
+  #[test]
+  fn parity() {
+    let mut c = StickerCube::solved();
+    assert!(!c.corner_parity());
+    assert!(!c.edge_parity());
+
+    let u =
+      Move::Face(Face::U, Amount::Single, Direction::Clockwise, Width::One);
+    c.do_move_mut(u);
+
+    assert!(c.corner_parity());
+    assert!(c.edge_parity());
   }
 
   #[test]
