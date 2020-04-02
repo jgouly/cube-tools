@@ -174,8 +174,6 @@ mod tests {
     let mut c = StickerCube::solved();
     c.set_corner(URF, LDB);
     c.set_corner(LDB, URF);
-    c.set_edge(UF, UR);
-    c.set_edge(UR, UF);
 
     let result = solve_corners(&State { cube: c });
     assert_eq!(vec![vec![URF, LDB]], result);

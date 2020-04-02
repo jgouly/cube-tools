@@ -195,20 +195,11 @@ pub(crate) fn try_cycle_break<P: Piece + std::fmt::Debug>(
   Some((cycle.to_vec(), State { cube: next_cube }))
 }
 
-fn exec_parity(
-  c: &mut StickerCube,
-  corners: [CornerPos; 2],
-  edges: [EdgePos; 2],
-) {
+fn exec_parity(c: &mut StickerCube, corners: [CornerPos; 2]) {
   let c0 = c.corner(corners[0]);
   let c1 = c.corner(corners[1]);
   c.set_corner(corners[0], c1);
   c.set_corner(corners[1], c0);
-
-  let e0 = c.edge(edges[0]);
-  let e1 = c.edge(edges[1]);
-  c.set_edge(edges[0], e1);
-  c.set_edge(edges[1], e0);
   assert!(c.is_valid());
 }
 
@@ -230,7 +221,7 @@ pub(crate) fn try_parity(state: &State) -> Option<(Vec<CornerPos>, State)> {
 
   let cycle = [buffer, p0];
   let mut next_cube = c.clone();
-  exec_parity(&mut next_cube, cycle, [EdgePos::UF, EdgePos::UR]);
+  exec_parity(&mut next_cube, cycle);
   Some((cycle.to_vec(), State { cube: next_cube }))
 }
 
@@ -414,8 +405,6 @@ mod tests {
     let mut c = StickerCube::solved();
     c.set_corner(URF, UBR);
     c.set_corner(UBR, URF);
-    c.set_edge(UF, UR);
-    c.set_edge(UR, UF);
 
     let result = try_parity(&State { cube: c });
     assert_eq!(
@@ -431,8 +420,6 @@ mod tests {
     let mut c = StickerCube::solved();
     c.set_corner(URF, FLU);
     c.set_corner(FLU, URF);
-    c.set_edge(UF, UR);
-    c.set_edge(UR, UF);
 
     let result = try_parity(&State { cube: c });
     assert_eq!(
