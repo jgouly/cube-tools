@@ -169,6 +169,16 @@ impl StickerCube {
     self[e0.flip()] = self.face_to_sticker(f1);
   }
 
+  pub fn position_of(&self, e0: EdgePos) -> EdgePos {
+    for e1 in EdgePos::iter() {
+      if e0 == self.edge(e1) {
+        return e1;
+      }
+    }
+
+    unreachable!();
+  }
+
   fn sticker_to_face(&self, s: Sticker) -> Face {
     match s {
       _ if s == self[CentrePos::U] => Face::U,
@@ -480,6 +490,23 @@ mod tests {
     c.set_edge(UF, UR);
     c.set_edge(UR, UF);
     assert!(!c.is_valid());
+  }
+
+  #[test]
+  fn position_of() {
+    let mut c = StickerCube::solved();
+    c.set_edge(UF, UR);
+    c.set_edge(UR, UF);
+    assert_eq!(UF, c.position_of(UR));
+    assert_eq!(UR, c.position_of(UF));
+  }
+
+  #[test]
+  fn exhaustive_position_of() {
+    let c = StickerCube::solved();
+    for e in EdgePos::iter() {
+      assert_eq!(e, c.position_of(e));
+    }
   }
 
   #[test]
