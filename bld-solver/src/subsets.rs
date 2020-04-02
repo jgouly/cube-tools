@@ -1,4 +1,4 @@
-use crate::State;
+use crate::{is_valid, State};
 use cube::{CornerPos, EdgePos, StickerCube};
 use cycles::{cycle_len, get_piece_cycles, Piece};
 
@@ -15,7 +15,7 @@ pub(crate) fn exec_3cycle<P: Piece + std::fmt::Debug>(
   P::set(c, cycle[2], p1);
   P::set(c, cycle[1], p0);
   P::set(c, cycle[0], p2);
-  assert!(c.is_valid());
+  assert!(is_valid(c));
 }
 
 pub(crate) fn try_3cycle<P: Piece + std::fmt::Debug>(
@@ -41,7 +41,7 @@ fn exec_2twist<P: Piece + std::fmt::Debug>(c: &mut StickerCube, cycle: [P; 2]) {
   assert_ne!(cycle[0].orient(), cycle[1].orient());
   P::set(c, cycle[0], P::lookup(c, cycle[0].orient()));
   P::set(c, cycle[1], P::lookup(c, cycle[1].orient()));
-  assert!(c.is_valid());
+  assert!(is_valid(c));
 }
 
 pub(crate) fn try_corner_2twist(
@@ -88,7 +88,7 @@ fn exec_corner_3twist(c: &mut StickerCube, cycle: [CornerPos; 3]) {
   c.set_corner(cycle[0], c.corner(cycle[0].orient()));
   c.set_corner(cycle[1], c.corner(cycle[1].orient()));
   c.set_corner(cycle[2], c.corner(cycle[2].orient()));
-  assert!(c.is_valid());
+  assert!(is_valid(c));
 }
 
 pub(crate) fn try_corner_3twist(
@@ -200,7 +200,7 @@ fn exec_parity(c: &mut StickerCube, corners: [CornerPos; 2]) {
   let c1 = c.corner(corners[1]);
   c.set_corner(corners[0], c1);
   c.set_corner(corners[1], c0);
-  assert!(c.is_valid());
+  assert!(is_valid(c));
 }
 
 pub(crate) fn try_parity(state: &State) -> Option<(Vec<CornerPos>, State)> {
@@ -265,6 +265,7 @@ mod tests {
     let mut c = StickerCube::solved();
     c.set_corner(URF, FUR);
     c.set_corner(UFL, FLU);
+    assert!(c.is_valid());
     let result = try_corner_2twist(&State { cube: c });
     assert_eq!(
       Some((

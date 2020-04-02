@@ -67,6 +67,10 @@ fn solve_edges(state: &State) -> Vec<Vec<EdgePos>> {
   )
 }
 
+fn is_valid(c: &StickerCube) -> bool {
+  c.is_valid()
+}
+
 #[cfg(test)]
 mod tests {
   use super::*;
