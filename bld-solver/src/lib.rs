@@ -1,5 +1,5 @@
-use cube::{CornerPos, EdgePos, StickerCube};
-use cycles::{get_piece_cycles, Piece};
+use cube::{CornerPos, EdgePos, Piece, StickerCube};
+use cycles::get_piece_cycles;
 
 mod subsets;
 use subsets::*;

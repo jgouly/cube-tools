@@ -1,6 +1,6 @@
 use crate::{is_valid, State};
-use cube::{CornerPos, EdgePos, StickerCube};
-use cycles::{cycle_len, get_piece_cycles, Piece};
+use cube::{CornerPos, EdgePos, Piece, StickerCube};
+use cycles::{cycle_len, get_piece_cycles};
 
 pub(crate) fn exec_3cycle<P: Piece + std::fmt::Debug>(
   c: &mut StickerCube,

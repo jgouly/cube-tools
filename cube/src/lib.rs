@@ -3,11 +3,13 @@ use std::convert::TryFrom;
 mod alg;
 mod corner_pos;
 mod edge_pos;
+mod piece;
 mod sticker_cube;
 
 pub use alg::{parse_alg, Alg, Move};
 pub use corner_pos::CornerPos;
 pub use edge_pos::EdgePos;
+pub use piece::Piece;
 pub use sticker_cube::StickerCube;
 
 /// Represents a face of a cube.
