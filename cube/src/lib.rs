@@ -72,3 +72,27 @@ enum CentrePos {
   B,
   L,
 }
+
+fn num_inversions<P: PartialOrd>(perm: &[P]) -> usize {
+  let mut num = 0;
+  for i in 0..perm.len() - 1 {
+    for j in i + 1..perm.len() {
+      if perm[i] > perm[j] {
+        num += 1;
+      }
+    }
+  }
+  num
+}
+
+#[cfg(test)]
+mod tests {
+  use super::*;
+
+  #[test]
+  fn test_num_inversions() {
+    assert_eq!(0, num_inversions(&[0, 1, 2, 3, 4, 5]));
+    assert_eq!(1, num_inversions(&[0, 1, 3, 2, 4, 5]));
+    assert_eq!(2, num_inversions(&[0, 1, 4, 2, 3, 5]));
+  }
+}

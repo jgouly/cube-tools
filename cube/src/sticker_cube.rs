@@ -1,5 +1,5 @@
 use crate::alg::{Amount, Direction, Move, Width};
-use crate::{CentrePos, CornerPos, EdgePos, Face, Slice};
+use crate::{num_inversions, CentrePos, CornerPos, EdgePos, Face, Slice};
 use std::convert::TryFrom;
 use std::ops::{Index, IndexMut};
 
@@ -408,18 +408,6 @@ macro_rules! pos_index {
 pos_index!(EdgePos, edges);
 pos_index!(CentrePos, centres);
 pos_index!(CornerPos, corners);
-
-fn num_inversions<P: PartialOrd>(perm: &[P]) -> usize {
-  let mut num = 0;
-  for i in 0..perm.len() - 1 {
-    for j in i + 1..perm.len() {
-      if perm[i] > perm[j] {
-        num += 1;
-      }
-    }
-  }
-  num
-}
 
 #[cfg(test)]
 mod tests {
