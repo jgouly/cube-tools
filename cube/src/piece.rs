@@ -2,6 +2,7 @@ use crate::StickerCube;
 use crate::{CornerPos, EdgePos};
 
 pub trait Piece: PartialEq + Copy {
+  const NUM_ORIENTATIONS: usize;
   fn oriented_iter() -> Box<dyn Iterator<Item = Self>>;
   fn lookup(cube: &StickerCube, p: Self) -> Self;
   fn set(cube: &mut StickerCube, p0: Self, p1: Self);
@@ -12,6 +13,8 @@ pub trait Piece: PartialEq + Copy {
 }
 
 impl Piece for EdgePos {
+  const NUM_ORIENTATIONS: usize = 2;
+
   fn oriented_iter() -> Box<dyn Iterator<Item = Self>> {
     Box::new(Self::oriented_iter())
   }
@@ -46,6 +49,8 @@ impl Piece for EdgePos {
 }
 
 impl Piece for CornerPos {
+  const NUM_ORIENTATIONS: usize = 3;
+
   fn oriented_iter() -> Box<dyn Iterator<Item = Self>> {
     Box::new(Self::oriented_iter())
   }
@@ -99,5 +104,20 @@ mod tests {
 
     assert_eq!(0, UR.num_rotations());
     assert_eq!(1, LB.num_rotations());
+  }
+
+  #[test]
+  fn test_num_orientations() {
+    let mut e = EdgePos::UF;
+    for _ in 0..EdgePos::NUM_ORIENTATIONS {
+      e = e.rotate();
+    }
+    assert_eq!(EdgePos::UF, e);
+
+    let mut c = CornerPos::URF;
+    for _ in 0..CornerPos::NUM_ORIENTATIONS {
+      c = c.rotate();
+    }
+    assert_eq!(CornerPos::URF, c);
   }
 }
