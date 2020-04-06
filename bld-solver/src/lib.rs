@@ -1,5 +1,4 @@
 use cube::{CornerPos, EdgePos, Piece, StickerCube};
-use cycles::get_piece_cycles;
 
 mod subsets;
 use subsets::*;
@@ -12,30 +11,24 @@ struct State {
 fn solve_pieces<P: Piece + std::fmt::Debug>(
   state: &State,
   funcs: &[fn(&State) -> Option<(Vec<P>, State)>],
-) -> Vec<Vec<P>> {
-  let orig_cube = state.cube.clone();
-
+) -> Result<Vec<Vec<P>>, ()> {
   (0..)
-    .try_fold((vec![], state.clone()), |(mut cycles, state), _| {
-      if P::solved(&state.cube) {
-        Err(cycles)
-      } else {
-        let (cycle, next_state) =
-          funcs.iter().find_map(|f| f(&state)).unwrap_or_else(|| {
-            let orig_cycles = get_piece_cycles::<P>(&orig_cube);
-            unreachable!(
-              "{:?} {:?} {:?} {:?}",
-              cycles,
-              get_piece_cycles::<P>(&state.cube),
-              orig_cycles,
-              orig_cube
-            )
-          });
+    .try_fold(
+      Ok((vec![], state.clone())),
+      |cycles: Result<(Vec<Vec<P>>, State), ()>, _| {
+        let (mut cycles, state) =
+          cycles.expect("Should never have an Err() here!");
+        if P::solved(&state.cube) {
+          Err(Ok(cycles))
+        } else {
+          let (cycle, next_state) =
+            funcs.iter().find_map(|f| f(&state)).ok_or(Err(()))?;
 
-        cycles.push(cycle);
-        Ok((cycles, next_state))
-      }
-    })
+          cycles.push(cycle);
+          Ok(Ok((cycles, next_state)))
+        }
+      },
+    )
     .unwrap_err()
 }
 
@@ -51,6 +44,7 @@ fn solve_corners(state: &State) -> Vec<Vec<CornerPos>> {
       try_corner_2twist,
     ],
   )
+  .unwrap()
 }
 
 fn solve_edges(state: &State) -> Vec<Vec<EdgePos>> {
@@ -63,6 +57,7 @@ fn solve_edges(state: &State) -> Vec<Vec<EdgePos>> {
       try_edge_2flip,
     ],
   )
+  .unwrap()
 }
 
 // This checks if a cube is valid, taking into account the fact that parity
@@ -214,5 +209,22 @@ mod tests {
     let (e, c) = solve(&c);
     assert_eq!(vec![vec![URF, LDB]], c);
     assert_eq!(0, e.len());
+  }
+
+  #[test]
+  fn test_fallible_solve() {
+    let mut c = StickerCube::solved();
+    c.set_corner(URF, LDB);
+    c.set_corner(LDB, URF);
+
+    let result =
+      solve_pieces(&State { cube: c.clone() }, &[try_3cycle::<CornerPos>]);
+    assert_eq!(Err(()), result);
+
+    let mut c = StickerCube::solved();
+    exec_3cycle(&mut c, [URF, UBR, ULB]);
+
+    let result = solve_pieces(&State { cube: c.clone() }, &[try_parity]);
+    assert_eq!(Err(()), result);
   }
 }
