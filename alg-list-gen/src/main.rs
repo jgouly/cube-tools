@@ -45,10 +45,19 @@ fn format_alg(alg: &Alg) -> String {
         format!(" class='{:?}'", cycle[0][0]),
       )
     }
-    Some(Category::EdgeCycle3) => div(a(
-      alg_cubing_url(alg),
-      format!("{:?} {}", get_edge_cycle(alg), alg),
-    )),
+    Some(Category::EdgeCycle3) => {
+      let cycle = get_edge_cycle(alg);
+      div_with_attr(
+        div_with_attr(
+          div_with_attr(
+            div(a(alg_cubing_url(alg), format!("{:?} {}", cycle, alg))),
+            format!(" class='{:?}'", cycle[0][2]),
+          ),
+          format!(" class='{:?}'", cycle[0][1]),
+        ),
+        format!(" class='{:?}'", cycle[0][0]),
+      )
+    },
     _ => unimplemented!(),
   }) + "\n"
 }
@@ -62,6 +71,11 @@ fn filter_html(algs: &[Alg]) -> &'static str {
       r#"<input type="text" id="p0" size="3"></input>
          <input type="text" id="p1" size="3"></input>
          <input type="text" id="p2" size="3"></input>"#
+    }
+    Some(Category::EdgeCycle3) => {
+      r#"<input type="text" id="p0" size="2"></input>
+         <input type="text" id="p1" size="2"></input>
+         <input type="text" id="p2" size="2"></input>"#
     }
     _ => unimplemented!(),
   }
