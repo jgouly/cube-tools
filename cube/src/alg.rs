@@ -136,7 +136,7 @@ impl Move {
     }
   }
 
-  pub fn cancel(&self, m: &Move) -> Option<Option<Move>> {
+  fn cancel(&self, m: &Move) -> Option<Option<Move>> {
     if self.is_same_movement(m) {
       if let Some((a, d)) = cancel_amt_and_dir(
         self.amount(),
@@ -216,6 +216,32 @@ impl Alg {
       }
       Alg::Comm(a, b) => Alg::Comm(b.clone(), a.clone()),
       Alg::Conj(a, b) => Alg::Conj(a.clone(), Box::new(b.invert())),
+    }
+  }
+
+  pub fn cancel(&self) -> Alg {
+    match self {
+      Alg::Seq(inner) => {
+        let mut result = Vec::<Move>::with_capacity(inner.len());
+        if inner.len() != 0 {
+          for m in inner {
+            match result.last().map(|l| l.cancel(m)) {
+              Some(Some(Some(m))) => {
+                *result.last_mut().unwrap() = m;
+              }
+              Some(Some(None)) => {
+                result.pop();
+              }
+              Some(None) | None => {
+                result.push(m.clone());
+              }
+            }
+          }
+        }
+        Alg::Seq(result)
+      }
+      Alg::Comm(a, b) => Alg::Comm(Box::new(a.cancel()), Box::new(b.cancel())),
+      Alg::Conj(a, b) => Alg::Conj(Box::new(a.cancel()), Box::new(b.cancel())),
     }
   }
 
@@ -335,5 +361,33 @@ mod tests {
     assert_eq!(None, m0.cancel(&m1));
     assert_eq!(None, m1.cancel(&m0));
     assert_eq!(Some(None), m1.cancel(&m2));
+  }
+
+  #[test]
+  fn cancel_alg() {
+    macro_rules! assert_cancel {
+      ($expected: expr, $input: expr) => {
+        assert_eq!(
+          parse_alg($expected).unwrap(),
+          parse_alg($input).unwrap().cancel()
+        );
+      };
+    }
+
+    assert_cancel!("R2", "R R");
+    assert_cancel!("", "R R'");
+    assert_cancel!("", "R2 R2");
+    assert_cancel!("R2", "R U U' R");
+    assert_cancel!("R2", "U U' R R");
+    assert_cancel!("R'", "R R2");
+    assert_cancel!("R'", "R R2'");
+    assert_cancel!("R'", "R2 R");
+    assert_cancel!("R'", "R2' R");
+    assert_cancel!("[R2, U]", "[R R, U]");
+
+    assert_eq!(
+      parse_alg("R2' U R D R' U' R D' R").unwrap(),
+      parse_alg("[R': [R' U R, D]]").unwrap().expand().cancel()
+    );
   }
 }
