@@ -21,8 +21,7 @@ impl std::fmt::Display for Amount {
 }
 
 /// The direction of a move.
-#[derive(Clone, Copy, Debug)]
-#[cfg_attr(test, derive(PartialEq))]
+#[derive(Clone, Copy, Debug, PartialEq)]
 pub enum Direction {
   Clockwise,
   AntiClockwise,
@@ -46,8 +45,39 @@ impl std::fmt::Display for Direction {
   }
 }
 
-#[derive(Clone, Copy, Debug)]
-#[cfg_attr(test, derive(PartialEq))]
+fn cancel_amt_and_dir(
+  a0: Amount,
+  d0: Direction,
+  a1: Amount,
+  d1: Direction,
+) -> Option<(Amount, Direction)> {
+  match (a0, a1) {
+    (Amount::Single, Amount::Single) => {
+      if d0 == d1 {
+        Some((Amount::Double, d0))
+      } else {
+        None
+      }
+    }
+    (Amount::Double, Amount::Double) => None,
+    (Amount::Single, Amount::Double) => {
+      if d0 == Direction::Clockwise {
+        Some((Amount::Single, Direction::AntiClockwise))
+      } else {
+        Some((Amount::Single, Direction::Clockwise))
+      }
+    }
+    (Amount::Double, Amount::Single) => {
+      if d1 == Direction::Clockwise {
+        Some((Amount::Single, Direction::AntiClockwise))
+      } else {
+        Some((Amount::Single, Direction::Clockwise))
+      }
+    }
+  }
+}
+
+#[derive(Clone, Copy, Debug, PartialEq)]
 pub enum Width {
   One,
   Two,
@@ -71,12 +101,58 @@ pub enum Move {
 }
 
 impl Move {
+  fn amount(&self) -> Amount {
+    match self {
+      Move::Face(_, a, _, _) => *a,
+      Move::Slice(_, a, _) => *a,
+    }
+  }
+
+  fn direction(&self) -> Direction {
+    match self {
+      Move::Face(_, _, d, _) => *d,
+      Move::Slice(_, _, d) => *d,
+    }
+  }
+
   fn invert(&self) -> Move {
     match self {
       Move::Face(f, amt, dir, width) => {
         Move::Face(*f, *amt, dir.invert(), *width)
       }
       Move::Slice(s, amt, dir) => Move::Slice(*s, *amt, dir.invert()),
+    }
+  }
+
+  fn is_same_movement(&self, m: &Move) -> bool {
+    match (self, m) {
+      (Move::Face(f0, _, _, w0), Move::Face(f1, _, _, w1))
+        if f0 == f1 && w0 == w1 =>
+      {
+        true
+      }
+      (Move::Slice(s0, _, _), Move::Slice(s1, _, _)) if s0 == s1 => true,
+      _ => false,
+    }
+  }
+
+  pub fn cancel(&self, m: &Move) -> Option<Option<Move>> {
+    if self.is_same_movement(m) {
+      if let Some((a, d)) = cancel_amt_and_dir(
+        self.amount(),
+        self.direction(),
+        m.amount(),
+        m.direction(),
+      ) {
+        match self {
+          Move::Face(f, _, _, w) => Some(Some(Move::Face(*f, a, d, *w))),
+          Move::Slice(s, _, _) => Some(Some(Move::Slice(*s, a, d))),
+        }
+      } else {
+        Some(None)
+      }
+    } else {
+      None
     }
   }
 }
@@ -215,5 +291,49 @@ mod tests {
 
     let alg = parse_alg("[F: R U R']").unwrap();
     assert_eq!(parse_alg("[F: R U' R']").unwrap(), alg.invert());
+  }
+
+  #[test]
+  fn same_movement() {
+    let m0 =
+      Move::Face(Face::U, Amount::Single, Direction::Clockwise, Width::One);
+    let m1 =
+      Move::Face(Face::R, Amount::Single, Direction::Clockwise, Width::One);
+    let m2 = Move::Face(
+      Face::R,
+      Amount::Single,
+      Direction::AntiClockwise,
+      Width::One,
+    );
+    assert!(m0.is_same_movement(&m0));
+    assert!(!m0.is_same_movement(&m1));
+    assert!(!m1.is_same_movement(&m0));
+    assert!(m1.is_same_movement(&m2));
+  }
+
+  #[test]
+  fn cancel_move() {
+    let m0 =
+      Move::Face(Face::U, Amount::Single, Direction::Clockwise, Width::One);
+    let m1 =
+      Move::Face(Face::R, Amount::Single, Direction::Clockwise, Width::One);
+    let m2 = Move::Face(
+      Face::R,
+      Amount::Single,
+      Direction::AntiClockwise,
+      Width::One,
+    );
+    assert_eq!(
+      Some(Some(Move::Face(
+        Face::U,
+        Amount::Double,
+        Direction::Clockwise,
+        Width::One
+      ))),
+      m0.cancel(&m0)
+    );
+    assert_eq!(None, m0.cancel(&m1));
+    assert_eq!(None, m1.cancel(&m0));
+    assert_eq!(Some(None), m1.cancel(&m2));
   }
 }

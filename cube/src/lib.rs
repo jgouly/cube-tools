@@ -15,8 +15,7 @@ pub use random_state::*;
 pub use sticker_cube::StickerCube;
 
 /// Represents a face of a cube.
-#[derive(Clone, Copy, Debug)]
-#[cfg_attr(test, derive(PartialEq))]
+#[derive(Clone, Copy, Debug, PartialEq)]
 pub enum Face {
   U,
   R,
@@ -43,8 +42,7 @@ impl TryFrom<char> for Face {
 }
 
 /// Represents a slice of a cube.
-#[derive(Clone, Copy, Debug)]
-#[cfg_attr(test, derive(PartialEq))]
+#[derive(Clone, Copy, Debug, PartialEq)]
 pub enum Slice {
   E,
   M,

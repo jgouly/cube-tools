@@ -57,7 +57,7 @@ fn format_alg(alg: &Alg) -> String {
         ),
         format!(" class='{:?}'", cycle[0][0]),
       )
-    },
+    }
     _ => unimplemented!(),
   }) + "\n"
 }
