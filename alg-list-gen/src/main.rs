@@ -135,11 +135,11 @@ fn all_equal<I: Iterator<Item = T>, T: PartialEq>(mut iter: I) -> bool {
 }
 
 fn all_same_category(algs: &[Alg]) -> bool {
-  all_equal(
-    algs
-      .iter()
-      .map(|a| std::mem::discriminant(&get_alg_category(a))),
-  )
+  all_equal(algs.iter().map(|a| {
+    std::mem::discriminant(
+      &get_alg_category(a).expect("Should have a category!"),
+    )
+  }))
 }
 
 fn main() -> Result<(), String> {
