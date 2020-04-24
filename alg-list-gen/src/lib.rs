@@ -7,6 +7,7 @@ pub enum Category {
   CornerCycle3,
   EdgeCycle3,
   EdgeFlip,
+  Parity,
 }
 
 pub fn get_alg_category(alg: &Alg) -> Option<Category> {
@@ -23,6 +24,11 @@ pub fn get_alg_category(alg: &Alg) -> Option<Category> {
   } else if corners.len() == 0 {
     edges_only(&edges)
   } else {
+    if edges.len() == 1 && corners.len() == 1 {
+      if edges[0].len() == 2 && corners[0].len() == 2 {
+        return Some(Category::Parity);
+      }
+    }
     None
   }
 }

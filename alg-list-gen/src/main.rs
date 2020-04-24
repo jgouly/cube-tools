@@ -102,6 +102,20 @@ fn format_alg(alg: &Alg, letter_scheme: &Option<LetterScheme>) -> String {
         &cycle,
       )
     }
+    Some(Category::Parity) => {
+      let corner_cycle = get_corner_cycle(alg);
+      let edge_cycle = get_edge_cycle(alg);
+      div_with_attr(
+        div_with_attr(
+          div(a(
+            alg_cubing_url(alg),
+            format!("{:?} {:?} {}", corner_cycle[0], edge_cycle[0], alg),
+          )),
+          format!(" class='{:?}'", corner_cycle[0][1]),
+        ),
+        format!(" class='{:?}'", corner_cycle[0][0]),
+      )
+    }
     _ => unimplemented!(),
   }) + "\n"
 }
@@ -122,6 +136,7 @@ fn filter_html(algs: &[Alg]) -> &'static str {
          <input type="text" id="p2" size="2"></input>"#
     }
     Some(Category::EdgeFlip) => "",
+    Some(Category::Parity) => "",
     _ => unimplemented!(),
   }
 }
