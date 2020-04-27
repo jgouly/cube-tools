@@ -1,5 +1,5 @@
 use alg_list_gen::{get_alg_category, Category};
-use cube::{parse_alg, Alg, CornerPos, EdgePos, StickerCube};
+use cube::{parse_alg, Alg, CornerPos, EdgePos, Piece, StickerCube};
 use cycles::get_piece_cycles;
 
 fn div(text: impl AsRef<str>) -> String {
@@ -15,6 +15,19 @@ fn a(link: impl AsRef<str>, text: impl AsRef<str>) -> String {
     "<a href=\"{}\" target=\"_blank\">{}</a>",
     link.as_ref(),
     text.as_ref()
+  )
+}
+
+fn div_cycle<P: Piece + std::fmt::Debug, S: AsRef<str>>(
+  v: S,
+  cycle: &[Vec<P>],
+) -> String {
+  div_with_attr(
+    div_with_attr(
+      div_with_attr(v, format!(" class='{:?}'", cycle[0][2])),
+      format!(" class='{:?}'", cycle[0][1]),
+    ),
+    format!(" class='{:?}'", cycle[0][0]),
   )
 }
 
@@ -34,28 +47,16 @@ fn format_alg(alg: &Alg) -> String {
   (match get_alg_category(alg) {
     Some(Category::CornerCycle3) => {
       let cycle = get_corner_cycle(alg);
-      div_with_attr(
-        div_with_attr(
-          div_with_attr(
-            div(a(alg_cubing_url(alg), format!("{:?} {}", cycle, alg))),
-            format!(" class='{:?}'", cycle[0][2]),
-          ),
-          format!(" class='{:?}'", cycle[0][1]),
-        ),
-        format!(" class='{:?}'", cycle[0][0]),
+      div_cycle(
+        div(a(alg_cubing_url(alg), format!("{:?} {}", cycle, alg))),
+        &cycle,
       )
     }
     Some(Category::EdgeCycle3) => {
       let cycle = get_edge_cycle(alg);
-      div_with_attr(
-        div_with_attr(
-          div_with_attr(
-            div(a(alg_cubing_url(alg), format!("{:?} {}", cycle, alg))),
-            format!(" class='{:?}'", cycle[0][2]),
-          ),
-          format!(" class='{:?}'", cycle[0][1]),
-        ),
-        format!(" class='{:?}'", cycle[0][0]),
+      div_cycle(
+        div(a(alg_cubing_url(alg), format!("{:?} {}", cycle, alg))),
+        &cycle,
       )
     }
     _ => unimplemented!(),
