@@ -48,14 +48,14 @@ fn format_alg(alg: &Alg) -> String {
     Some(Category::CornerCycle3) => {
       let cycle = get_corner_cycle(alg);
       div_cycle(
-        div(a(alg_cubing_url(alg), format!("{:?} {}", cycle, alg))),
+        div(a(alg_cubing_url(alg), format!("{:?} {}", cycle[0], alg))),
         &cycle,
       )
     }
     Some(Category::EdgeCycle3) => {
       let cycle = get_edge_cycle(alg);
       div_cycle(
-        div(a(alg_cubing_url(alg), format!("{:?} {}", cycle, alg))),
+        div(a(alg_cubing_url(alg), format!("{:?} {}", cycle[0], alg))),
         &cycle,
       )
     }
