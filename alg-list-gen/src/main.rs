@@ -143,7 +143,26 @@ fn all_same_category(algs: &[Alg]) -> bool {
   }))
 }
 
+fn create_options() -> getopts::Options {
+  let mut opts = getopts::Options::new();
+  opts.optflag("h", "help", "print this help message");
+  opts
+}
+
 fn main() -> Result<(), String> {
+  let opts = create_options();
+  let args: Vec<String> = std::env::args().collect();
+  let matches = match opts.parse(&args[1..]) {
+    Ok(m) => m,
+    Err(f) => return Err(f.to_string()),
+  };
+
+  if matches.opt_present("h") {
+    let brief = format!("Usage: {} [options]", args[0]);
+    println!("{}", opts.usage(&brief));
+    return Ok(());
+  }
+
   let algs = read_algs()?;
   assert!(all_same_category(&algs));
   println!("{}", gen_alg_list(algs));
