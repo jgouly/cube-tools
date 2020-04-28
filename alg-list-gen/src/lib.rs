@@ -47,6 +47,29 @@ fn edges_only(cycles: &[Vec<EdgePos>]) -> Option<Category> {
   }
 }
 
+pub struct LetterScheme {
+  pub corners: Vec<String>,
+  pub edges: Vec<String>,
+}
+
+impl LetterScheme {
+  fn corner(&self, c: CornerPos) -> char {
+    self.corners[c as usize].chars().next().unwrap()
+  }
+
+  pub fn corner_pair(&self, c0: CornerPos, c1: CornerPos) -> String {
+    format!("{}{}", self.corner(c0), self.corner(c1))
+  }
+
+  fn edge(&self, c: EdgePos) -> char {
+    self.edges[c as usize].chars().next().unwrap()
+  }
+
+  pub fn edge_pair(&self, e0: EdgePos, e1: EdgePos) -> String {
+    format!("{}{}", self.edge(e0), self.edge(e1))
+  }
+}
+
 #[cfg(test)]
 mod tests {
   use super::*;
@@ -84,5 +107,37 @@ mod tests {
     );
 
     assert_eq!(None, get_alg_category(&parse_alg("U").unwrap()));
+  }
+
+  #[test]
+  fn letter_scheme() {
+    let ls = LetterScheme {
+      corners: vec![
+        "a".to_string(),
+        "b".to_string(),
+        "c".to_string(),
+        "d".to_string(),
+      ],
+      edges: vec![
+        "e".to_string(),
+        "f".to_string(),
+        "g".to_string(),
+        "h".to_string(),
+      ],
+    };
+
+    assert_eq!('a', ls.corner(CornerPos::URF));
+    assert_eq!(
+      "ad".to_string(),
+      ls.corner_pair(CornerPos::URF, CornerPos::UFL)
+    );
+    assert_eq!(
+      "dc".to_string(),
+      ls.corner_pair(CornerPos::UFL, CornerPos::FUR)
+    );
+
+    assert_eq!('e', ls.edge(EdgePos::UF));
+    assert_eq!("eg".to_string(), ls.edge_pair(EdgePos::UF, EdgePos::UL));
+    assert_eq!("hf".to_string(), ls.edge_pair(EdgePos::LU, EdgePos::FU));
   }
 }
