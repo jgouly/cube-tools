@@ -1,4 +1,4 @@
-use alg_list_gen::{get_alg_category, Category};
+use alg_list_gen::{get_alg_category, Category, LetterScheme};
 use cube::{parse_alg, Alg, CornerPos, EdgePos, Piece, StickerCube};
 use cycles::get_piece_cycles;
 
@@ -43,19 +43,37 @@ fn alg_cubing_url(alg: &Alg) -> String {
   url
 }
 
-fn format_alg(alg: &Alg) -> String {
+fn format_alg(alg: &Alg, letter_scheme: &Option<LetterScheme>) -> String {
   (match get_alg_category(alg) {
     Some(Category::CornerCycle3) => {
       let cycle = get_corner_cycle(alg);
       div_cycle(
-        div(a(alg_cubing_url(alg), format!("{:?} {}", cycle[0], alg))),
+        div(a(
+          alg_cubing_url(alg),
+          format!(
+            "{:?} {} {}",
+            cycle[0],
+            letter_scheme.as_ref().map_or_else(String::new, |s| s
+              .corner_pair(cycle[0][1], cycle[0][2])),
+            alg
+          ),
+        )),
         &cycle,
       )
     }
     Some(Category::EdgeCycle3) => {
       let cycle = get_edge_cycle(alg);
       div_cycle(
-        div(a(alg_cubing_url(alg), format!("{:?} {}", cycle[0], alg))),
+        div(a(
+          alg_cubing_url(alg),
+          format!(
+            "{:?} {} {}",
+            cycle[0],
+            letter_scheme.as_ref().map_or_else(String::new, |s| s
+              .edge_pair(cycle[0][1], cycle[0][2])),
+            alg
+          ),
+        )),
         &cycle,
       )
     }
@@ -82,8 +100,14 @@ fn filter_html(algs: &[Alg]) -> &'static str {
   }
 }
 
-fn gen_alg_list(algs: Vec<Alg>) -> String {
-  let algs_html = algs.iter().map(format_alg).collect::<String>();
+fn gen_alg_list(
+  algs: Vec<Alg>,
+  letter_scheme: &Option<LetterScheme>,
+) -> String {
+  let algs_html = algs
+    .iter()
+    .map(|a| format_alg(a, letter_scheme))
+    .collect::<String>();
   let filter_html = filter_html(&algs);
   let body = String::from(filter_html) + &algs_html;
   String::from(TEMPLATE).replace("BODY", &body)
@@ -165,7 +189,7 @@ fn main() -> Result<(), String> {
 
   let algs = read_algs()?;
   assert!(all_same_category(&algs));
-  println!("{}", gen_alg_list(algs));
+  println!("{}", gen_alg_list(algs, &None));
 
   Ok(())
 }
