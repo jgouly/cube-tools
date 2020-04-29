@@ -10,3 +10,4 @@ edition = "2018"
 cube = { path = "../cube" }
 cycles = { path = "../cycles" }
 getopts = "0.2"
+miniserde = "0.1"

@@ -1,5 +1,6 @@
 use cube::{Alg, CornerPos, EdgePos, StickerCube};
 use cycles::get_piece_cycles;
+use miniserde::Deserialize;
 
 #[derive(Debug, PartialEq)]
 pub enum Category {
@@ -47,6 +48,7 @@ fn edges_only(cycles: &[Vec<EdgePos>]) -> Option<Category> {
   }
 }
 
+#[derive(Deserialize)]
 pub struct LetterScheme {
   pub corners: Vec<String>,
   pub edges: Vec<String>,
