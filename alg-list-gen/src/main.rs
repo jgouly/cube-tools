@@ -171,6 +171,7 @@ fn all_same_category(algs: &[Alg]) -> bool {
 fn create_options() -> getopts::Options {
   let mut opts = getopts::Options::new();
   opts.optflag("h", "help", "print this help message");
+  opts.optopt("", "scheme", "Load letter scheme from <file>", "FILE");
   opts
 }
 
@@ -190,7 +191,13 @@ fn main() -> Result<(), String> {
 
   let algs = read_algs()?;
   assert!(all_same_category(&algs));
-  println!("{}", gen_alg_list(algs, &None));
+
+  let letter_scheme = matches.opt_str("scheme").map(|s| {
+    let data = std::fs::read_to_string(s).expect("Unable to read file");
+    json::from_str(&data).unwrap()
+  });
+
+  println!("{}", gen_alg_list(algs, &letter_scheme));
 
   Ok(())
 }
