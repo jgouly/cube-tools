@@ -111,10 +111,15 @@ pub fn parse_alg(input: &str) -> Result<Alg, ParseError> {
   if input.len() == 0 {
     return Ok(Alg::Seq(vec![]));
   }
-  parse_alg_inner(input, EndOfInputMode::None).map(|r| {
-    assert_eq!(r.1.trim_start().len(), 0);
-    r.0
-  })
+
+  let (alg, input) = parse_alg_inner(input, EndOfInputMode::None)?;
+
+  if input.trim_start().len() > 0 {
+    let (alg2, _) = parse_alg_inner(input.trim_start(), EndOfInputMode::None)?;
+    Ok(Alg::Pair(Box::new(alg), Box::new(alg2)))
+  } else {
+    Ok(alg)
+  }
 }
 
 #[cfg(test)]
@@ -212,6 +217,31 @@ mod tests {
         Move::Face(D, Double, AntiClockwise, One),
       ])),
       parse_alg("R2 U' D2'")
+    );
+  }
+
+  #[test]
+  fn alg_pair() {
+    assert_eq!(
+      Ok(Alg::Pair(
+        Box::new(Alg::Comm(
+          Box::new(Alg::Seq(vec![
+            Move::Face(R, Single, AntiClockwise, One),
+            Move::Face(D, Single, Clockwise, One),
+            Move::Face(R, Single, Clockwise, One)
+          ])),
+          Box::new(Alg::Seq(vec![Move::Face(U, Single, AntiClockwise, One)]))
+        )),
+        Box::new(Alg::Comm(
+          Box::new(Alg::Seq(vec![
+            Move::Face(R, Single, Clockwise, One),
+            Move::Face(D, Single, AntiClockwise, One),
+            Move::Face(R, Single, AntiClockwise, One)
+          ])),
+          Box::new(Alg::Seq(vec![Move::Face(U, Single, AntiClockwise, One)]))
+        ))
+      )),
+      parse_alg("[R' D R, U'] [R D' R', U']")
     );
   }
 

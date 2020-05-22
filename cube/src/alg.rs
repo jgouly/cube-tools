@@ -174,6 +174,7 @@ pub enum Alg {
   Seq(Vec<Move>),
   Comm(Box<Alg>, Box<Alg>),
   Conj(Box<Alg>, Box<Alg>),
+  Pair(Box<Alg>, Box<Alg>),
 }
 
 impl Alg {
@@ -205,6 +206,12 @@ impl Alg {
         moves.extend(b);
         moves.extend(a.iter().rev().map(|m| m.invert()));
       }
+      Alg::Pair(a, b) => {
+        let a = a.expand().seq_as_vec();
+        let b = b.expand().seq_as_vec();
+        moves.extend(a);
+        moves.extend(b);
+      }
     }
     Alg::Seq(moves)
   }
@@ -216,6 +223,7 @@ impl Alg {
       }
       Alg::Comm(a, b) => Alg::Comm(b.clone(), a.clone()),
       Alg::Conj(a, b) => Alg::Conj(a.clone(), Box::new(b.invert())),
+      Alg::Pair(a, b) => Alg::Pair(Box::new(b.invert()), Box::new(a.invert())),
     }
   }
 
@@ -242,6 +250,7 @@ impl Alg {
       }
       Alg::Comm(a, b) => Alg::Comm(Box::new(a.cancel()), Box::new(b.cancel())),
       Alg::Conj(a, b) => Alg::Conj(Box::new(a.cancel()), Box::new(b.cancel())),
+      Alg::Pair(a, b) => Alg::Pair(Box::new(a.cancel()), Box::new(b.cancel())),
     }
   }
 
@@ -264,6 +273,7 @@ impl std::fmt::Display for Alg {
       ),
       Alg::Comm(a, b) => write!(f, "[{}, {}]", a, b),
       Alg::Conj(a, b) => write!(f, "[{}: {}]", a, b),
+      Alg::Pair(a, b) => write!(f, "{} {}", a, b),
     }
   }
 }
@@ -287,6 +297,10 @@ mod tests {
 
     assert_eq!("[R, U]", parse_alg("[R,U]").unwrap().to_string());
     assert_eq!("[D: U]", parse_alg("[ D   :U ]").unwrap().to_string());
+    assert_eq!(
+      "[U, L] [R, U]",
+      parse_alg("[U,   L][  R,U]").unwrap().to_string()
+    );
   }
 
   #[test]
@@ -302,6 +316,9 @@ mod tests {
 
     let alg = parse_alg("[R': [R, U]]").unwrap();
     assert_eq!(parse_alg("R' R U R' U' R").unwrap(), alg.expand());
+
+    let pair = parse_alg("[D, L][R, U]").unwrap();
+    assert_eq!(parse_alg("D L D' L' R U R' U'").unwrap(), pair.expand());
   }
 
   #[test]
@@ -317,6 +334,9 @@ mod tests {
 
     let alg = parse_alg("[F: R U R']").unwrap();
     assert_eq!(parse_alg("[F: R U' R']").unwrap(), alg.invert());
+
+    let alg = parse_alg("[F, R] [R, U]").unwrap();
+    assert_eq!(parse_alg("[U, R] [R, F]").unwrap(), alg.invert());
   }
 
   #[test]
