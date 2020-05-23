@@ -1,11 +1,12 @@
 use cube::{Alg, CornerPos, EdgePos, StickerCube};
-use cycles::get_piece_cycles;
+use cycles::{cycle_len, get_piece_cycles};
 use miniserde::Deserialize;
 
 #[derive(Debug, PartialEq)]
 pub enum Category {
   CornerCycle3,
   EdgeCycle3,
+  EdgeFlip,
 }
 
 pub fn get_alg_category(alg: &Alg) -> Option<Category> {
@@ -44,7 +45,11 @@ fn edges_only(cycles: &[Vec<EdgePos>]) -> Option<Category> {
       _ => None,
     }
   } else {
-    None
+    if cycles.iter().all(|c| cycle_len(c) == 1) {
+      Some(Category::EdgeFlip)
+    } else {
+      None
+    }
   }
 }
 

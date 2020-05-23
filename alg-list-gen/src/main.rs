@@ -19,6 +19,15 @@ fn a(link: impl AsRef<str>, text: impl AsRef<str>) -> String {
   )
 }
 
+fn div_flip_or_twist<P: Piece + std::fmt::Debug>(
+  v: String,
+  cycle: &[Vec<P>],
+) -> String {
+  cycle.iter().rev().fold(v, |acc, c| {
+    div_with_attr(acc, format!(" class='{:?}'", c[0]))
+  })
+}
+
 fn div_cycle<P: Piece + std::fmt::Debug, S: AsRef<str>>(
   v: S,
   cycle: &[Vec<P>],
@@ -78,6 +87,21 @@ fn format_alg(alg: &Alg, letter_scheme: &Option<LetterScheme>) -> String {
         &cycle,
       )
     }
+    Some(Category::EdgeFlip) => {
+      let cycle = get_edge_cycle(alg);
+      let cycle_str = match cycle.len() {
+        2 => format!("[{:?}, {:?}]", cycle[0][0], cycle[1][0]),
+        4 => format!(
+          "[{:?}, {:?}, {:?}, {:?}]",
+          cycle[0][0], cycle[1][0], cycle[2][0], cycle[3][0]
+        ),
+        _ => unimplemented!(),
+      };
+      div_flip_or_twist(
+        a(alg_cubing_url(alg), format!("{} {}", cycle_str, alg)),
+        &cycle,
+      )
+    }
     _ => unimplemented!(),
   }) + "\n"
 }
@@ -97,6 +121,7 @@ fn filter_html(algs: &[Alg]) -> &'static str {
          <input type="text" id="p1" size="2"></input>
          <input type="text" id="p2" size="2"></input>"#
     }
+    Some(Category::EdgeFlip) => "",
     _ => unimplemented!(),
   }
 }
