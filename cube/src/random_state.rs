@@ -7,7 +7,7 @@ fn random_state_pieces<P: Piece, R: Rng + ?Sized>(rng: &mut R) -> Vec<P> {
   pieces.shuffle(rng);
 
   let orientation =
-    std::iter::repeat_with(|| rng.gen_range(0, P::NUM_ORIENTATIONS));
+    std::iter::repeat_with(|| rng.gen_range(0..P::NUM_ORIENTATIONS));
   let mut total_orientation = 0;
 
   pieces.iter_mut().zip(orientation).for_each(|(c, i)| {
@@ -29,8 +29,8 @@ fn random_state_pieces<P: Piece, R: Rng + ?Sized>(rng: &mut R) -> Vec<P> {
 }
 
 fn fix_parity<P: PartialOrd, R: Rng + ?Sized>(pieces: &mut [P], rng: &mut R) {
-  let c0 = rng.gen_range(0, pieces.len());
-  let mut c1 = rng.gen_range(0, pieces.len() - 1);
+  let c0 = rng.gen_range(0..pieces.len());
+  let mut c1 = rng.gen_range(0..pieces.len() - 1);
   if c1 >= c0 {
     c1 += 1;
   }
