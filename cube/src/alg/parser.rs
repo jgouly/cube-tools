@@ -64,6 +64,10 @@ fn parse_alg_inner(
   input: &str,
   mode: EndOfInputMode,
 ) -> Result<(Alg, &str), ParseError> {
+  if input.len() == 0 {
+    return Err(ParseError);
+  }
+
   match &input[0..1] {
     "[" => {
       let (c, input) = split_first(input).ok_or(ParseError)?;
@@ -74,7 +78,10 @@ fn parse_alg_inner(
       let (b, input) =
         parse_alg_inner(input.trim_start(), EndOfInputMode::RightBracket)?;
       let (c, input) = split_first(input).ok_or(ParseError)?;
-      assert_eq!(']', c);
+      if c != ']' {
+        return Err(ParseError);
+      }
+
       let a = Box::new(a);
       let b = Box::new(b);
       match sep {
@@ -89,6 +96,12 @@ fn parse_alg_inner(
       let res = std::iter::from_fn(|| {
         input = input.trim_start();
         if input.len() == 0 {
+          return None;
+        }
+
+        // If there is a '[', let it be parsed as another
+        // part of an Alg::Compound.
+        if &input[0..1] == "[" {
           return None;
         }
 
@@ -114,12 +127,20 @@ pub fn parse_alg(input: &str) -> Result<Alg, ParseError> {
 
   let (alg, input) = parse_alg_inner(input, EndOfInputMode::None)?;
 
-  if input.trim_start().len() > 0 {
-    let (alg2, _) = parse_alg_inner(input.trim_start(), EndOfInputMode::None)?;
-    Ok(Alg::Pair(Box::new(alg), Box::new(alg2)))
-  } else {
-    Ok(alg)
+  if input.trim_start().len() == 0 {
+    return Ok(alg);
   }
+
+  let mut algs = vec![alg];
+  let mut input = input.trim_start();
+
+  while input.len() > 0 {
+    let (alg, remaining) = parse_alg_inner(input, EndOfInputMode::None)?;
+    algs.push(alg);
+    input = remaining.trim_start();
+  }
+
+  Ok(Alg::Compound(algs))
 }
 
 #[cfg(test)]
@@ -221,31 +242,6 @@ mod tests {
   }
 
   #[test]
-  fn alg_pair() {
-    assert_eq!(
-      Ok(Alg::Pair(
-        Box::new(Alg::Comm(
-          Box::new(Alg::Seq(vec![
-            Move::Face(R, Single, AntiClockwise, One),
-            Move::Face(D, Single, Clockwise, One),
-            Move::Face(R, Single, Clockwise, One)
-          ])),
-          Box::new(Alg::Seq(vec![Move::Face(U, Single, AntiClockwise, One)]))
-        )),
-        Box::new(Alg::Comm(
-          Box::new(Alg::Seq(vec![
-            Move::Face(R, Single, Clockwise, One),
-            Move::Face(D, Single, AntiClockwise, One),
-            Move::Face(R, Single, AntiClockwise, One)
-          ])),
-          Box::new(Alg::Seq(vec![Move::Face(U, Single, AntiClockwise, One)]))
-        ))
-      )),
-      parse_alg("[R' D R, U'] [R D' R', U']")
-    );
-  }
-
-  #[test]
   fn commutators() {
     assert_eq!(
       Ok(Alg::Comm(
@@ -291,6 +287,39 @@ mod tests {
   }
 
   #[test]
+  fn compound() {
+    assert_eq!(
+      Ok(Alg::Compound(vec![
+        Alg::Conj(
+          Box::new(Alg::Seq(vec![Move::Face(R, Single, Clockwise, One)])),
+          Box::new(Alg::Seq(vec![Move::Face(U, Single, Clockwise, One)])),
+        ),
+        Alg::Conj(
+          Box::new(Alg::Seq(vec![Move::Face(R, Single, AntiClockwise, One)])),
+          Box::new(Alg::Seq(vec![Move::Face(F, Single, Clockwise, One)])),
+        )
+      ])),
+      parse_alg("[R: U] [R': F]")
+    );
+
+    assert_eq!(
+      Ok(Alg::Compound(vec![
+        Alg::Seq(vec![Move::Face(R, Single, Clockwise, One)]),
+        Alg::Comm(
+          Box::new(Alg::Seq(vec![Move::Face(R, Single, Clockwise, One)])),
+          Box::new(Alg::Seq(vec![Move::Face(U, Single, Clockwise, One)])),
+        ),
+        Alg::Conj(
+          Box::new(Alg::Seq(vec![Move::Face(R, Single, AntiClockwise, One)])),
+          Box::new(Alg::Seq(vec![Move::Face(F, Single, Clockwise, One)])),
+        ),
+        Alg::Seq(vec![Move::Face(D, Single, Clockwise, One)]),
+      ])),
+      parse_alg("R [R, U] [R': F] D")
+    );
+  }
+
+  #[test]
   fn invalid() {
     assert_eq!(Err(ParseError), parse_alg("a"));
     assert_eq!(Err(ParseError), parse_alg("R '"));
@@ -300,6 +329,7 @@ mod tests {
     assert_eq!(Err(ParseError), parse_alg("R,"));
     assert_eq!(Err(ParseError), parse_alg("R:"));
     assert_eq!(Err(ParseError), parse_alg("[a"));
+    assert_eq!(Err(ParseError), parse_alg("["));
     assert_eq!(Err(ParseError), parse_alg("[R, U"));
     assert_eq!(Err(ParseError), parse_alg("[R, U["));
     assert_eq!(Err(ParseError), parse_alg("[R] U]"));

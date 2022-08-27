@@ -171,10 +171,10 @@ impl std::fmt::Display for Move {
 #[derive(Clone, Debug)]
 #[cfg_attr(test, derive(PartialEq))]
 pub enum Alg {
+  Compound(Vec<Alg>),
   Seq(Vec<Move>),
   Comm(Box<Alg>, Box<Alg>),
   Conj(Box<Alg>, Box<Alg>),
-  Pair(Box<Alg>, Box<Alg>),
 }
 
 impl Alg {
@@ -190,6 +190,9 @@ impl Alg {
   pub fn expand(&self) -> Alg {
     let mut moves = vec![];
     match self {
+      Alg::Compound(algs) => {
+        moves = algs.iter().flat_map(|a| a.expand().seq_as_vec()).collect();
+      }
       Alg::Seq(inner) => moves = inner.clone(),
       Alg::Comm(a, b) => {
         let a = a.expand().seq_as_vec();
@@ -206,29 +209,30 @@ impl Alg {
         moves.extend(b);
         moves.extend(a.iter().rev().map(|m| m.invert()));
       }
-      Alg::Pair(a, b) => {
-        let a = a.expand().seq_as_vec();
-        let b = b.expand().seq_as_vec();
-        moves.extend(a);
-        moves.extend(b);
-      }
     }
     Alg::Seq(moves)
   }
 
   pub fn invert(&self) -> Alg {
     match self {
+      Alg::Compound(algs) => {
+        let new = algs.iter().rev().map(|a| a.invert()).collect();
+        Alg::Compound(new)
+      }
       Alg::Seq(inner) => {
         Alg::Seq(inner.iter().rev().map(|m| m.invert()).collect())
       }
       Alg::Comm(a, b) => Alg::Comm(b.clone(), a.clone()),
       Alg::Conj(a, b) => Alg::Conj(a.clone(), Box::new(b.invert())),
-      Alg::Pair(a, b) => Alg::Pair(Box::new(b.invert()), Box::new(a.invert())),
     }
   }
 
   pub fn cancel(&self) -> Alg {
     match self {
+      Alg::Compound(algs) => {
+        let new = algs.iter().map(|a| a.cancel()).collect();
+        Alg::Compound(new)
+      }
       Alg::Seq(inner) => {
         let mut result = Vec::<Move>::with_capacity(inner.len());
         if inner.len() != 0 {
@@ -250,7 +254,6 @@ impl Alg {
       }
       Alg::Comm(a, b) => Alg::Comm(Box::new(a.cancel()), Box::new(b.cancel())),
       Alg::Conj(a, b) => Alg::Conj(Box::new(a.cancel()), Box::new(b.cancel())),
-      Alg::Pair(a, b) => Alg::Pair(Box::new(a.cancel()), Box::new(b.cancel())),
     }
   }
 
@@ -262,6 +265,15 @@ impl Alg {
 impl std::fmt::Display for Alg {
   fn fmt(&self, f: &mut std::fmt::Formatter) -> std::fmt::Result {
     match self {
+      Alg::Compound(algs) => write!(
+        f,
+        "{}",
+        algs
+          .iter()
+          .map(|a| format!("{} ", a))
+          .collect::<String>()
+          .trim_end()
+      ),
       Alg::Seq(moves) => write!(
         f,
         "{}",
@@ -273,7 +285,6 @@ impl std::fmt::Display for Alg {
       ),
       Alg::Comm(a, b) => write!(f, "[{}, {}]", a, b),
       Alg::Conj(a, b) => write!(f, "[{}: {}]", a, b),
-      Alg::Pair(a, b) => write!(f, "{} {}", a, b),
     }
   }
 }
@@ -404,6 +415,7 @@ mod tests {
     assert_cancel!("R'", "R2 R");
     assert_cancel!("R'", "R2' R");
     assert_cancel!("[R2, U]", "[R R, U]");
+    assert_cancel!("R [R2, U]", "R [R R, U]");
 
     assert_eq!(
       parse_alg("R2' U R D R' U' R D' R").unwrap(),
