@@ -1,3 +1,4 @@
+mod ids;
 mod piece_cube;
 mod pruning_table;
 mod transition_table;
