@@ -1,4 +1,4 @@
-use cube::{CornerPos, EdgePos, Piece, StickerCube};
+use cube::{CornerPos, EdgePos, Move, Piece, StickerCube};
 
 const NUM_CORNERS: usize = 8;
 const NUM_EDGES: usize = 12;
@@ -40,6 +40,12 @@ impl PieceCube {
     ];
     let eo = [0; NUM_EDGES];
     PieceCube { cp, co, ep, eo }
+  }
+
+  pub fn do_move(&self, m: Move) -> Self {
+    let mut sc = StickerCube::from(self.clone());
+    sc.do_move_mut(m);
+    sc.into()
   }
 }
 
