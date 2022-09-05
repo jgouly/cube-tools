@@ -1,4 +1,5 @@
 mod piece_cube;
+mod pruning_table;
 mod transition_table;
 
 use piece_cube::PieceCube;
