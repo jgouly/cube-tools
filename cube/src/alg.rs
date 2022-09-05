@@ -101,6 +101,16 @@ pub enum Move {
 }
 
 impl Move {
+  pub fn from_face_and_num_90degrees(f: Face, n: usize) -> Move {
+    let (a, d) = match n - 1 {
+      0 => (Amount::Single, Direction::Clockwise),
+      1 => (Amount::Double, Direction::Clockwise),
+      2 => (Amount::Single, Direction::AntiClockwise),
+      _ => unreachable!(),
+    };
+    Move::Face(f, a, d, Width::One)
+  }
+
   fn amount(&self) -> Amount {
     match self {
       Move::Face(_, a, _, _) => *a,
