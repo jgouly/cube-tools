@@ -47,6 +47,11 @@ impl PieceCube {
     sc.do_move_mut(m);
     sc.into()
   }
+
+  pub fn is_valid(&self) -> bool {
+    let sc = StickerCube::from(self.clone());
+    sc.is_valid()
+  }
 }
 
 impl From<PieceCube> for StickerCube {
