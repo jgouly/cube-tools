@@ -314,6 +314,12 @@ impl std::fmt::Display for Alg {
   }
 }
 
+impl From<Vec<Move>> for Alg {
+  fn from(moves: Vec<Move>) -> Self {
+    Alg::Seq(moves)
+  }
+}
+
 #[cfg(test)]
 mod tests {
   use super::*;
