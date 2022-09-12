@@ -215,6 +215,26 @@ pub struct G1Tables {
   ud2_p: Box<[usize]>,
 }
 
+impl G1Tables {
+  pub fn new() -> Self {
+    let ep_t = init_transition_table::<EPCoord>(1);
+    let cp_t = init_transition_table::<CPCoord>(1);
+    let ud2_t = init_transition_table::<UD2Coord>(1);
+    let ep_p = get_ep_prune_table(&ep_t);
+    let cp_p = get_cp_prune_table(&cp_t);
+    let ud2_p = get_ud2_prune_table(&ud2_t);
+
+    G1Tables {
+      ep_t,
+      cp_t,
+      ud2_t,
+      ep_p,
+      cp_p,
+      ud2_p,
+    }
+  }
+}
+
 impl GroupTables for G1Tables {
   type Coord = G1Coord;
 

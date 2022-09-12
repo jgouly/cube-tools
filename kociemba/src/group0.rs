@@ -283,6 +283,26 @@ pub struct G0Tables {
   pub ud1_p: Box<[usize]>,
 }
 
+impl G0Tables {
+  pub fn new() -> Self {
+    let eo_t = init_transition_table::<EOCoord>(0);
+    let co_t = init_transition_table::<COCoord>(0);
+    let ud1_t = init_transition_table::<UD1Coord>(0);
+    let eo_p = get_eo_prune_table(&eo_t);
+    let co_p = get_co_prune_table(&co_t);
+    let ud1_p = get_ud1_prune_table(&ud1_t);
+
+    G0Tables {
+      eo_t,
+      co_t,
+      ud1_t,
+      eo_p,
+      co_p,
+      ud1_p,
+    }
+  }
+}
+
 impl GroupTables for G0Tables {
   type Coord = G0Coord;
 
