@@ -118,6 +118,14 @@ impl Move {
     }
   }
 
+  pub fn is_half_turn(&self) -> bool {
+    match self {
+      Move::Face(_, Amount::Double, _, _) => true,
+      Move::Slice(_, Amount::Double, _) => true,
+      _ => false,
+    }
+  }
+
   fn amount(&self) -> Amount {
     match self {
       Move::Face(_, a, _, _) => *a,
