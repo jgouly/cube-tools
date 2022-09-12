@@ -25,6 +25,17 @@ pub enum Face {
   L,
 }
 
+impl Face {
+  pub fn is_opposite(self, f: Face) -> bool {
+    match (self, f) {
+      (Face::U, Face::D) | (Face::D, Face::U) => true,
+      (Face::R, Face::L) | (Face::L, Face::R) => true,
+      (Face::F, Face::B) | (Face::B, Face::F) => true,
+      _ => false,
+    }
+  }
+}
+
 impl TryFrom<char> for Face {
   type Error = ();
 
