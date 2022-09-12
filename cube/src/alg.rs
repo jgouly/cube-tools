@@ -111,6 +111,13 @@ impl Move {
     Move::Face(f, a, d, Width::One)
   }
 
+  pub fn face(&self) -> Face {
+    match self {
+      Move::Face(f, _, _, _) => *f,
+      Move::Slice(_, _, _) => unreachable!(),
+    }
+  }
+
   fn amount(&self) -> Amount {
     match self {
       Move::Face(_, a, _, _) => *a,
