@@ -116,6 +116,29 @@ fn format_alg(alg: &Alg, letter_scheme: &Option<LetterScheme>) -> String {
         format!(" class='{:?}'", corner_cycle[0][0]),
       )
     }
+    Some(Category::Ltct) => {
+      let corner_cycle = get_corner_cycle(alg);
+      let misoriented_corner = match corner_cycle[1][1].num_rotations() {
+        1 => corner_cycle[1][1].rotate().rotate(),
+        2 => corner_cycle[1][1].rotate(),
+        _ => unreachable!(),
+      };
+      div_with_attr(
+        div_with_attr(
+          div(a(
+            alg_cubing_url(alg),
+            format!(
+              "{:?} [{:?}] {}",
+              &corner_cycle[0][1..2],
+              misoriented_corner,
+              alg
+            ),
+          )),
+          format!(" class='{:?}'", corner_cycle[1][1]),
+        ),
+        format!(" class='{:?}'", corner_cycle[0][1]),
+      )
+    }
     _ => unimplemented!(),
   }) + "\n"
 }
@@ -137,6 +160,7 @@ fn filter_html(algs: &[Alg]) -> &'static str {
     }
     Some(Category::EdgeFlip) => "",
     Some(Category::Parity) => "",
+    Some(Category::Ltct) => "",
     _ => unimplemented!(),
   }
 }

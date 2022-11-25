@@ -8,6 +8,7 @@ pub enum Category {
   EdgeCycle3,
   EdgeFlip,
   Parity,
+  Ltct,
 }
 
 pub fn get_alg_category(alg: &Alg) -> Option<Category> {
@@ -23,12 +24,19 @@ pub fn get_alg_category(alg: &Alg) -> Option<Category> {
     corners_only(&corners)
   } else if corners.len() == 0 {
     edges_only(&edges)
-  } else {
-    if edges.len() == 1 && corners.len() == 1 {
-      if edges[0].len() == 2 && corners[0].len() == 2 {
-        return Some(Category::Parity);
-      }
+  } else if edges.len() == 1 && corners.len() == 1 {
+    if edges[0].len() == 2 && corners[0].len() == 2 {
+      return Some(Category::Parity);
     }
+
+    None
+  } else if edges.len() == 1 && corners.len() == 2 {
+    if edges[0].len() == 2 && corners[0].len() == 3 && corners[1].len() == 2 {
+      return Some(Category::Ltct);
+    }
+
+    None
+  } else {
     None
   }
 }
@@ -120,6 +128,24 @@ mod tests {
     );
 
     assert_eq!(None, get_alg_category(&parse_alg("U").unwrap()));
+  }
+
+  #[test]
+  fn parity() {
+    assert_eq!(
+      Some(Category::Parity),
+      get_alg_category(
+        &parse_alg("R U R' F' R U R' U' R' F R2 U' R' U'").unwrap()
+      )
+    );
+  }
+
+  #[test]
+  fn ltct() {
+    assert_eq!(
+      Some(Category::Ltct),
+      get_alg_category(&parse_alg("R B2 R' D Rw B2 Rw D Rw2 D'").unwrap())
+    );
   }
 
   #[test]
