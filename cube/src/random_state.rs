@@ -2,7 +2,7 @@ use crate::{num_inversions, CornerPos, EdgePos, Piece, StickerCube};
 use rand::seq::SliceRandom;
 use rand::{thread_rng, Rng};
 
-fn random_state_pieces<P: Piece, R: Rng + ?Sized>(rng: &mut R) -> Vec<P> {
+fn random_state_pieces<P: Piece>(rng: &mut (impl Rng + ?Sized)) -> Vec<P> {
   let mut pieces = P::oriented_iter().collect::<Vec<_>>();
   pieces.shuffle(rng);
 
@@ -28,7 +28,7 @@ fn random_state_pieces<P: Piece, R: Rng + ?Sized>(rng: &mut R) -> Vec<P> {
   pieces
 }
 
-fn fix_parity<P: PartialOrd, R: Rng + ?Sized>(pieces: &mut [P], rng: &mut R) {
+fn fix_parity<P: PartialOrd>(pieces: &mut [P], rng: &mut (impl Rng + ?Sized)) {
   let c0 = rng.gen_range(0..pieces.len());
   let mut c1 = rng.gen_range(0..pieces.len() - 1);
   if c1 >= c0 {
@@ -39,15 +39,14 @@ fn fix_parity<P: PartialOrd, R: Rng + ?Sized>(pieces: &mut [P], rng: &mut R) {
   pieces.swap(c0, c1);
 }
 
-fn random_state_subset<P: Piece + PartialOrd + std::fmt::Debug>() -> StickerCube
-{
-  let mut rng = thread_rng();
-
-  let mut pieces = random_state_pieces(&mut rng);
+fn random_state_subset<P: Piece + PartialOrd + std::fmt::Debug>(
+  rng: &mut (impl Rng + ?Sized),
+) -> StickerCube {
+  let mut pieces = random_state_pieces(rng);
 
   let parity = num_inversions(&pieces) % 2 != 0;
   if parity {
-    fix_parity(&mut pieces, &mut rng);
+    fix_parity(&mut pieces, rng);
   }
 
   let mut c = StickerCube::solved();
@@ -61,11 +60,11 @@ fn random_state_subset<P: Piece + PartialOrd + std::fmt::Debug>() -> StickerCube
 }
 
 pub fn random_state_edges() -> StickerCube {
-  random_state_subset::<EdgePos>()
+  random_state_subset::<EdgePos>(thread_rng())
 }
 
 pub fn random_state_corners() -> StickerCube {
-  random_state_subset::<CornerPos>()
+  random_state_subset::<CornerPos>(thread_rng())
 }
 
 pub fn random_state() -> StickerCube {
