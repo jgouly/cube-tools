@@ -59,12 +59,12 @@ fn random_state_subset<P: Piece + PartialOrd + std::fmt::Debug>(
   c
 }
 
-pub fn random_state_edges() -> StickerCube {
-  random_state_subset::<EdgePos>(thread_rng())
+pub fn random_state_edges(rng: &mut (impl Rng + ?Sized)) -> StickerCube {
+  random_state_subset::<EdgePos>(rng)
 }
 
-pub fn random_state_corners() -> StickerCube {
-  random_state_subset::<CornerPos>(thread_rng())
+pub fn random_state_corners(rng: &mut (impl Rng + ?Sized)) -> StickerCube {
+  random_state_subset::<CornerPos>(rng)
 }
 
 pub fn random_state() -> StickerCube {
@@ -108,12 +108,12 @@ mod tests {
   #[test]
   fn test_random_states_are_valid() {
     for _ in 0..100 {
-      let c = random_state_corners();
+      let c = random_state_corners(&mut thread_rng());
       assert!(c.is_valid());
     }
 
     for _ in 0..100 {
-      let c = random_state_edges();
+      let c = random_state_edges(&mut thread_rng());
       assert!(c.is_valid());
     }
 
