@@ -164,7 +164,7 @@ mod tests {
   #[test]
   fn random_sticker_cube_conversion() {
     for _ in 0..100 {
-      let sc1 = cube::random_state();
+      let sc1 = cube::random_state(&mut rand::thread_rng());
       let c: PieceCube = sc1.clone().into();
       let sc2: StickerCube = c.into();
       assert_eq!(sc1, sc2);

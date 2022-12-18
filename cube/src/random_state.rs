@@ -1,6 +1,6 @@
 use crate::{num_inversions, CornerPos, EdgePos, Piece, StickerCube};
 use rand::seq::SliceRandom;
-use rand::{thread_rng, Rng};
+use rand::Rng;
 
 fn random_state_pieces<P: Piece>(rng: &mut (impl Rng + ?Sized)) -> Vec<P> {
   let mut pieces = P::oriented_iter().collect::<Vec<_>>();
@@ -67,19 +67,17 @@ pub fn random_state_corners(rng: &mut (impl Rng + ?Sized)) -> StickerCube {
   random_state_subset::<CornerPos>(rng)
 }
 
-pub fn random_state() -> StickerCube {
-  let mut rng = thread_rng();
-
-  let mut corners = random_state_pieces(&mut rng);
-  let mut edges = random_state_pieces(&mut rng);
+pub fn random_state(rng: &mut (impl Rng + ?Sized)) -> StickerCube {
+  let mut corners = random_state_pieces(rng);
+  let mut edges = random_state_pieces(rng);
 
   let c_parity = num_inversions(&corners) % 2 != 0;
   let e_parity = num_inversions(&edges) % 2 != 0;
   if c_parity != e_parity {
     if rng.gen() {
-      fix_parity(&mut corners, &mut rng);
+      fix_parity(&mut corners, rng);
     } else {
-      fix_parity(&mut edges, &mut rng);
+      fix_parity(&mut edges, rng);
     }
 
     let c_parity = num_inversions(&corners) % 2 != 0;
@@ -104,6 +102,7 @@ pub fn random_state() -> StickerCube {
 #[cfg(test)]
 mod tests {
   use super::*;
+  use rand::thread_rng;
 
   #[test]
   fn test_random_states_are_valid() {
@@ -118,7 +117,7 @@ mod tests {
     }
 
     for _ in 0..100 {
-      let c = random_state();
+      let c = random_state(&mut thread_rng());
       assert!(c.is_valid());
     }
   }
