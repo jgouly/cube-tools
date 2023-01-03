@@ -6,4 +6,5 @@ members = [
     "cube",
     "cycles",
     "kociemba",
+    "random-state",
 ]
