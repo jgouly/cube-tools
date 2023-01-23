@@ -1,4 +1,4 @@
-use cube::{CornerPos, Piece, StickerCube};
+use cube::{CornerPos, EdgePos, Piece, StickerCube};
 use rand::{
   seq::{IteratorRandom, SliceRandom},
   Rng,
@@ -95,4 +95,27 @@ pub fn random_2c2c(
 pub fn random_floating_2c2c(rng: &mut (impl Rng + ?Sized)) -> StickerCube {
   let buffer = CornerPos::oriented_iter().choose(rng).unwrap();
   random_2c2c(rng, buffer)
+}
+
+pub fn random_2e2e(
+  rng: &mut (impl Rng + ?Sized),
+  buffer: EdgePos,
+) -> StickerCube {
+  let [e0, e1, e2] = pieces(rng, buffer);
+  let edges = [buffer, e0, e1, e2];
+
+  let flips: [bool; 3] = [rng.gen(), rng.gen(), rng.gen()];
+  let last_flip = flips.iter().fold(false, |f, r| f ^ r);
+
+  let flip = |f, e: EdgePos| if f { e.flip() } else { e };
+
+  let mut c = StickerCube::solved();
+  c.set_edge(edges[0], flip(flips[0], edges[1]));
+  c.set_edge(edges[1], flip(flips[1], edges[0]));
+  c.set_edge(edges[2], flip(flips[2], edges[3]));
+  c.set_edge(edges[3], flip(last_flip, edges[2]));
+
+  assert!(c.is_valid());
+
+  c
 }
