@@ -4,6 +4,15 @@ use rand::{
   Rng,
 };
 
+fn rotate(r: u8, c: CornerPos) -> CornerPos {
+  match r % 3 {
+    0 => c,
+    1 => c.clockwise_pos(),
+    2 => c.anti_clockwise_pos(),
+    _ => unreachable!(),
+  }
+}
+
 fn filter<'a, P: Piece + PartialEq>(
   p: impl Iterator<Item = P> + 'a,
   f: &'a [P],
@@ -54,4 +63,36 @@ pub fn random_3twist(
 pub fn random_floating_3twist(rng: &mut (impl Rng + ?Sized)) -> StickerCube {
   let buffer = CornerPos::oriented_iter().choose(rng).unwrap();
   random_3twist(rng, buffer)
+}
+
+pub fn random_2c2c(
+  rng: &mut (impl Rng + ?Sized),
+  buffer: CornerPos,
+) -> StickerCube {
+  let [c0, c1, c2] =
+    pieces_from(rng, filter(CornerPos::oriented_iter(), &[buffer]));
+  let corners = [buffer, c0, c1, c2];
+
+  let twists: [u8; 3] = [
+    rng.gen_range(0..3),
+    rng.gen_range(0..3),
+    rng.gen_range(0..3),
+  ];
+
+  let last_twist = 3 - (twists.iter().sum::<u8>() % 3);
+
+  let mut c = StickerCube::solved();
+  c.set_corner(corners[0], rotate(twists[0], corners[1]));
+  c.set_corner(corners[1], rotate(twists[1], corners[0]));
+  c.set_corner(corners[2], rotate(twists[2], corners[3]));
+  c.set_corner(corners[3], rotate(last_twist, corners[2]));
+
+  assert!(c.is_valid());
+
+  c
+}
+
+pub fn random_floating_2c2c(rng: &mut (impl Rng + ?Sized)) -> StickerCube {
+  let buffer = CornerPos::oriented_iter().choose(rng).unwrap();
+  random_2c2c(rng, buffer)
 }
