@@ -161,3 +161,25 @@ pub fn random_ltct_with_target(
 pub fn random_ltct(rng: &mut (impl Rng + ?Sized)) -> StickerCube {
   random_ltct_with_target(rng, &[])
 }
+
+pub fn random_t2c(rng: &mut (impl Rng + ?Sized)) -> StickerCube {
+  let buffer = CornerPos::URF;
+  let [c0, c1] = pieces(rng, buffer);
+
+  let twists: [u8; 2] = [rng.gen_range(1..3), rng.gen_range(0..3)];
+
+  let last_twist = 3 - (twists.iter().sum::<u8>() % 3);
+
+  let mut c = StickerCube::solved();
+
+  c.set_edge(EdgePos::UR, EdgePos::UF);
+  c.set_edge(EdgePos::UF, EdgePos::UR);
+
+  c.set_corner(CornerPos::URF, rotate(twists[0], CornerPos::URF));
+  c.set_corner(c0, rotate(twists[1], c1));
+  c.set_corner(c1, rotate(last_twist, c0));
+
+  assert!(c.is_valid());
+
+  c
+}
