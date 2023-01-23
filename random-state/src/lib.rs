@@ -119,3 +119,45 @@ pub fn random_2e2e(
 
   c
 }
+
+pub fn random_ltct_with_target(
+  rng: &mut (impl Rng + ?Sized),
+  target: &[CornerPos],
+) -> StickerCube {
+  let buffer = CornerPos::URF;
+
+  let [c0, c1] = if let Some(&c0) = target.choose(rng) {
+    let [c1] =
+      pieces_from(rng, filter(CornerPos::oriented_iter(), &[buffer, c0]));
+    [c0, c1]
+  } else {
+    let [c0, c1] = pieces(rng, buffer);
+    let c0 = rotate(rng.gen_range(0..3), c0);
+    [c0, c1]
+  };
+
+  let c1 = rotate(rng.gen_range(0..3), c1);
+
+  let (r1, r2): (fn(CornerPos) -> CornerPos, fn(CornerPos) -> CornerPos) =
+    if rng.gen() {
+      (CornerPos::clockwise_pos, CornerPos::anti_clockwise_pos)
+    } else {
+      (CornerPos::anti_clockwise_pos, CornerPos::clockwise_pos)
+    };
+
+  let mut c = StickerCube::solved();
+  c.set_edge(EdgePos::UR, EdgePos::UF);
+  c.set_edge(EdgePos::UF, EdgePos::UR);
+
+  c.set_corner(buffer, c0);
+  c.set_corner(c1, r1(c1));
+  c.set_corner(c0, r2(buffer));
+
+  assert!(c.is_valid());
+
+  c
+}
+
+pub fn random_ltct(rng: &mut (impl Rng + ?Sized)) -> StickerCube {
+  random_ltct_with_target(rng, &[])
+}
