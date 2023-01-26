@@ -262,6 +262,27 @@ impl Alg {
         let mut result = Vec::<Move>::with_capacity(inner.len());
         if inner.len() != 0 {
           for m in inner {
+            if result.len() > 1 {
+              let idx = result.len() - 2;
+              match (m, result.last()) {
+                (Move::Face(f, ..), Some(Move::Face(f1, ..)))
+                  if f.is_opposite(*f1) =>
+                {
+                  match result.get(idx).map(|l| l.cancel(m)) {
+                    Some(Some(Some(m))) => {
+                      *result.get_mut(idx).unwrap() = m;
+                      continue;
+                    }
+                    Some(Some(None)) => {
+                      result.remove(idx);
+                      continue;
+                    }
+                    _ => {}
+                  }
+                }
+                _ => {}
+              }
+            }
             match result.last().map(|l| l.cancel(m)) {
               Some(Some(Some(m))) => {
                 *result.last_mut().unwrap() = m;
@@ -447,6 +468,10 @@ mod tests {
     assert_cancel!("R'", "R2' R");
     assert_cancel!("[R2, U]", "[R R, U]");
     assert_cancel!("R [R2, U]", "R [R R, U]");
+    assert_cancel!("R2 L2", "R L R L");
+    assert_cancel!("R F L2 R", "R F L R L");
+    assert_cancel!("", "L R L' R'");
+    assert_cancel!("U2 D", "U D U");
 
     assert_eq!(
       parse_alg("R2' U R D R' U' R D' R").unwrap(),
