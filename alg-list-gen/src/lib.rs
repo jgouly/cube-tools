@@ -7,6 +7,7 @@ pub enum Category {
   CornerCycle3,
   EdgeCycle3,
   EdgeFlip,
+  Twist2,
   Parity,
   Ltct,
 }
@@ -48,7 +49,11 @@ fn corners_only(cycles: &[Vec<CornerPos>]) -> Option<Category> {
       _ => None,
     }
   } else {
-    None
+    if cycles.len() == 2 && cycles.iter().all(|c| cycle_len(c) == 1) {
+      Some(Category::Twist2)
+    } else {
+      None
+    }
   }
 }
 
@@ -145,6 +150,14 @@ mod tests {
     assert_eq!(
       Some(Category::Ltct),
       get_alg_category(&parse_alg("R B2 R' D Rw B2 Rw D Rw2 D'").unwrap())
+    );
+  }
+
+  #[test]
+  fn twist2() {
+    assert_eq!(
+      Some(Category::Twist2),
+      get_alg_category(&parse_alg("[R' D R D' R' D R, U']").unwrap())
     );
   }
 
