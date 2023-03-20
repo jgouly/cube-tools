@@ -8,3 +8,6 @@ members = [
     "kociemba",
     "random-state",
 ]
+
+[workspace.dependencies]
+rand = { version = "0.8", default-features = false }
