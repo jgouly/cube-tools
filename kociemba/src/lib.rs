@@ -63,6 +63,6 @@ impl Kociemba {
     }
 
     solution.extend(g1);
-    solution.into()
+    cube::Alg::from(solution).cancel()
   }
 }
