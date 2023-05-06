@@ -1,0 +1,15 @@
+[package]
+name = "alg-trainer"
+version = "0.1.0"
+edition = "2021"
+
+# See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
+
+[dependencies]
+alg-list-gen = { path = "../alg-list-gen" }
+cube = { path = "../cube" }
+cycles = { path = "../cycles" }
+getopts = "0.2"
+kociemba = { path = "../kociemba" }
+miniserde = "0.1"
+rand = { workspace = true, features = ["std", "std_rng"] }

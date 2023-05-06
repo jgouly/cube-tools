@@ -13,6 +13,19 @@ dependencies = [
 ]
 
 [[package]]
+name = "alg-trainer"
+version = "0.1.0"
+dependencies = [
+ "alg-list-gen",
+ "cube",
+ "cycles",
+ "getopts",
+ "kociemba",
+ "miniserde",
+ "rand",
+]
+
+[[package]]
 name = "bld-solver"
 version = "0.1.0"
 dependencies = [
