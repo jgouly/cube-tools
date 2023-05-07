@@ -1,5 +1,5 @@
 use alg_list_gen::{get_alg_category, Category, LetterScheme};
-use cube::{parse_alg, Alg, CornerPos, StickerCube};
+use cube::{parse_alg, Alg, CornerPos, EdgePos, StickerCube};
 use kociemba::Kociemba;
 use miniserde::{json, Deserialize};
 use rand::prelude::SliceRandom;
@@ -27,6 +27,7 @@ fn read_alg_list(file: &str) -> Result<Vec<Alg>, String> {
 struct TrainerAlg {
   alg: Alg,
   corner_cycles: Vec<Vec<CornerPos>>,
+  edge_cycles: Vec<Vec<EdgePos>>,
 }
 
 impl TrainerAlg {
@@ -40,6 +41,9 @@ impl TrainerAlg {
         let p = letter_scheme
           .corner_pair(self.corner_cycles[0][1], self.corner_cycles[0][2]);
         words.get(&p).map(|s| s.as_str()).unwrap_or(&p).to_string()
+      }
+      Some(Category::EdgeCycle3) => {
+        letter_scheme.edge_pair(self.edge_cycles[0][1], self.edge_cycles[0][2])
       }
       unhandled => {
         panic!("Unhandled category: {:?} for {}", unhandled, self.alg)
@@ -60,6 +64,7 @@ fn into_trainer_algs(algs: Vec<Alg>) -> Vec<TrainerAlg> {
       TrainerAlg {
         alg,
         corner_cycles: cycles::get_piece_cycles::<CornerPos>(&c),
+        edge_cycles: cycles::get_piece_cycles::<EdgePos>(&c),
       }
     })
     .collect()
@@ -70,7 +75,6 @@ fn create_options() -> getopts::Options {
   opts.optflag("h", "help", "print this help message");
   opts.optopt("", "scheme", "Load letter scheme from <file>", "FILE");
   opts.optopt("", "words", "Load words from <file>", "FILE");
-  opts.optflag("", "corners", "Train corner algs");
   opts.optopt("", "algs", "Load algs to train from <file>", "FILE");
   opts.optopt("N", "", "N algs to train at a time ", "N");
   opts
@@ -106,10 +110,6 @@ fn main() -> Result<(), String> {
     let brief = format!("Usage: {} [options]", args[0]);
     println!("{}", opts.usage(&brief));
     return Ok(());
-  }
-
-  if !matches.opt_present("corners") {
-    return Err(String::from("alg-trainer only supports corner algs"));
   }
 
   let n = matches
