@@ -1,4 +1,4 @@
-use alg_list_gen::LetterScheme;
+use alg_list_gen::{get_alg_category, Category, LetterScheme};
 use cube::{parse_alg, Alg, CornerPos, StickerCube};
 use kociemba::Kociemba;
 use miniserde::{json, Deserialize};
@@ -29,6 +29,25 @@ struct TrainerAlg {
   corner_cycles: Vec<Vec<CornerPos>>,
 }
 
+impl TrainerAlg {
+  fn to_memo(
+    &self,
+    letter_scheme: &LetterScheme,
+    words: &HashMap<String, String>,
+  ) -> String {
+    match get_alg_category(&self.alg) {
+      Some(Category::CornerCycle3) => {
+        let p = letter_scheme
+          .corner_pair(self.corner_cycles[0][1], self.corner_cycles[0][2]);
+        words.get(&p).map(|s| s.as_str()).unwrap_or(&p).to_string()
+      }
+      unhandled => {
+        panic!("Unhandled category: {:?} for {}", unhandled, self.alg)
+      }
+    }
+  }
+}
+
 fn into_trainer_algs(algs: Vec<Alg>) -> Vec<TrainerAlg> {
   algs
     .into_iter()
@@ -40,7 +59,7 @@ fn into_trainer_algs(algs: Vec<Alg>) -> Vec<TrainerAlg> {
 
       TrainerAlg {
         alg,
-        corner_cycles: cycles::get_piece_cycles::<cube::CornerPos>(&c),
+        corner_cycles: cycles::get_piece_cycles::<CornerPos>(&c),
       }
     })
     .collect()
@@ -124,21 +143,14 @@ fn main() -> Result<(), String> {
       }
     }
 
-    let letters: Vec<_> = train
+    let memo: Vec<_> = train
       .iter()
-      .map(|alg| {
-        letter_scheme
-          .corner_pair(alg.corner_cycles[0][1], alg.corner_cycles[0][2])
-      })
+      .map(|alg| alg.to_memo(&letter_scheme, &words))
       .collect();
 
     println!("{}", k.solve(c).invert());
 
-    let words: Vec<&str> = letters
-      .iter()
-      .map(|p| words.get(p).map(|s| s.as_str()).unwrap_or(&p))
-      .collect();
-    println!("{}", words.join("\n"));
+    println!("{}", memo.join("\n"));
 
     wait_for_enter();
   }
