@@ -398,10 +398,10 @@ impl StickerCube {
   }
 }
 
-fn cycle4<T>(p0: T, p1: T, p2: T, p3: T, cube: &mut StickerCube)
+pub(crate) fn cycle4<T, S>(p0: T, p1: T, p2: T, p3: T, cube: &mut S)
 where
   T: Copy,
-  StickerCube: IndexMut<T, Output = Sticker>,
+  S: IndexMut<T, Output = Sticker>,
 {
   let op0 = cube[p0];
   let op1 = cube[p1];
