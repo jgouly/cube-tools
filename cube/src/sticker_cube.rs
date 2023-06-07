@@ -1,5 +1,7 @@
 use crate::alg::{Amount, Direction, Move, Width};
-use crate::{num_inversions, CentrePos, CornerPos, EdgePos, Face, Slice};
+use crate::{
+  num_inversions, CentrePos, CornerPos, EdgePos, Face, Piece, Slice,
+};
 use std::convert::TryFrom;
 use std::ops::{Index, IndexMut};
 
@@ -57,37 +59,17 @@ impl StickerCube {
   }
 
   pub fn is_valid(&self) -> bool {
-    let total_orientation = CornerPos::oriented_iter().fold(0, |o, c| {
-      let corner = self.corner(c);
-      let num_rotations = if corner == corner.orient() {
-        0
-      } else if corner.anti_clockwise_pos() == corner.orient() {
-        1
-      } else {
-        assert_eq!(corner.clockwise_pos(), corner.orient());
-        2
-      };
+    let total_orientation = CornerPos::oriented_iter()
+      .fold(0, |acc, cur| acc + self.corner(cur).num_rotations());
 
-      o + num_rotations
-    });
-
-    if total_orientation % 3 != 0 {
+    if total_orientation % CornerPos::NUM_ORIENTATIONS != 0 {
       return false;
     }
 
-    let total_orientation = EdgePos::oriented_iter().fold(0, |o, c| {
-      let edge = self.edge(c);
-      let num_rotations = if edge == edge.orient() {
-        0
-      } else {
-        assert_eq!(edge.flip(), edge.orient());
-        1
-      };
+    let total_orientation = EdgePos::oriented_iter()
+      .fold(0, |acc, cur| acc + self.edge(cur).num_rotations());
 
-      o + num_rotations
-    });
-
-    if total_orientation % 2 != 0 {
+    if total_orientation % EdgePos::NUM_ORIENTATIONS != 0 {
       return false;
     }
 
