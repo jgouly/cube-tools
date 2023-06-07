@@ -1,6 +1,6 @@
 use crate::alg::{Amount, Direction, Move, Width};
 use crate::{
-  num_inversions, CentrePos, CornerPos, EdgePos, Face, Piece, Slice,
+  num_inversions, CentrePos, CornerPos, EdgePos, Face, Piece, Rotation, Slice,
 };
 use std::convert::TryFrom;
 use std::ops::{Index, IndexMut};
@@ -220,6 +220,22 @@ impl StickerCube {
           }
         }
       }
+
+      Move::Rotation(r, amt, dir) => {
+        let amt = match (amt, dir) {
+          (Amount::Single, Direction::Clockwise) => 1,
+          (Amount::Single, Direction::AntiClockwise) => 3,
+          (Amount::Double, _) => 2,
+        };
+
+        for _ in 0..amt {
+          match r {
+            Rotation::X => self.do_x(),
+            Rotation::Y => self.do_y(),
+            Rotation::Z => self.do_z(),
+          }
+        }
+      }
     }
     assert!(self.is_valid());
   }
@@ -351,6 +367,34 @@ impl StickerCube {
   fn do_lw(&mut self) {
     self.do_l();
     self.do_m();
+  }
+
+  fn do_x(&mut self) {
+    self.do_r();
+    self.do_m();
+    self.do_m();
+    self.do_m();
+    self.do_l();
+    self.do_l();
+    self.do_l();
+  }
+
+  fn do_y(&mut self) {
+    self.do_u();
+    self.do_e();
+    self.do_e();
+    self.do_e();
+    self.do_d();
+    self.do_d();
+    self.do_d();
+  }
+
+  fn do_z(&mut self) {
+    self.do_f();
+    self.do_s();
+    self.do_b();
+    self.do_b();
+    self.do_b();
   }
 }
 
@@ -1666,4 +1710,106 @@ mod tests {
       ]
     }
   );
+
+  #[test]
+  fn rotation_x() {
+    let x = Move::Rotation(Rotation::X, Amount::Single, Direction::Clockwise);
+    let mut c = StickerCube::solved();
+    let s0 = c[URF];
+    let s1 = c[BLD];
+    c.do_move_mut(x);
+
+    assert!(c.is_solved());
+    assert_eq!(s0, c[BRU]);
+    assert_eq!(s1, c[DLF]);
+
+    let xprime =
+      Move::Rotation(Rotation::X, Amount::Single, Direction::AntiClockwise);
+    let mut c = StickerCube::solved();
+    let s0 = c[URF];
+    let s1 = c[BLD];
+    c.do_move_mut(xprime);
+
+    assert!(c.is_solved());
+    assert_eq!(s0, c[FRD]);
+    assert_eq!(s1, c[ULB]);
+
+    let x2 = Move::Rotation(Rotation::X, Amount::Double, Direction::Clockwise);
+    let mut c = StickerCube::solved();
+    let s0 = c[RUB];
+    let s1 = c[DRB];
+    c.do_move_mut(x2);
+
+    assert!(c.is_solved());
+    assert_eq!(s0, c[RDF]);
+    assert_eq!(s1, c[URF]);
+  }
+
+  #[test]
+  fn rotation_y() {
+    let y = Move::Rotation(Rotation::Y, Amount::Single, Direction::Clockwise);
+    let mut c = StickerCube::solved();
+    let s0 = c[URF];
+    let s1 = c[BLD];
+    c.do_move_mut(y);
+
+    assert!(c.is_solved());
+    assert_eq!(s0, c[UFL]);
+    assert_eq!(s1, c[RBD]);
+
+    let yprime =
+      Move::Rotation(Rotation::Y, Amount::Single, Direction::AntiClockwise);
+    let mut c = StickerCube::solved();
+    let s0 = c[FLU];
+    let s1 = c[DBL];
+    c.do_move_mut(yprime);
+
+    assert!(c.is_solved());
+    assert_eq!(s0, c[RFU]);
+    assert_eq!(s1, c[DRB]);
+
+    let y2 = Move::Rotation(Rotation::Y, Amount::Double, Direction::Clockwise);
+    let mut c = StickerCube::solved();
+    let s0 = c[RUB];
+    let s1 = c[LDB];
+    c.do_move_mut(y2);
+
+    assert!(c.is_solved());
+    assert_eq!(s0, c[LUF]);
+    assert_eq!(s1, c[RDF]);
+  }
+
+  #[test]
+  fn rotation_z() {
+    let z = Move::Rotation(Rotation::Z, Amount::Single, Direction::Clockwise);
+    let mut c = StickerCube::solved();
+    let s0 = c[URF];
+    let s1 = c[LUF];
+    c.do_move_mut(z);
+
+    assert!(c.is_solved());
+    assert_eq!(s0, c[RDF]);
+    assert_eq!(s1, c[URF]);
+
+    let zprime =
+      Move::Rotation(Rotation::Z, Amount::Single, Direction::AntiClockwise);
+    let mut c = StickerCube::solved();
+    let s0 = c[FLU];
+    let s1 = c[DBL];
+    c.do_move_mut(zprime);
+
+    assert!(c.is_solved());
+    assert_eq!(s0, c[FDL]);
+    assert_eq!(s1, c[RBD]);
+
+    let z2 = Move::Rotation(Rotation::Z, Amount::Double, Direction::Clockwise);
+    let mut c = StickerCube::solved();
+    let s0 = c[UBR];
+    let s1 = c[LDB];
+    c.do_move_mut(z2);
+
+    assert!(c.is_solved());
+    assert_eq!(s0, c[DBL]);
+    assert_eq!(s1, c[RUB]);
+  }
 }

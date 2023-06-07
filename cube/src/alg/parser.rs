@@ -1,4 +1,4 @@
-use crate::alg::{Alg, Amount, Direction, Face, Move, Slice, Width};
+use crate::alg::{Alg, Amount, Direction, Face, Move, Rotation, Slice, Width};
 use std::convert::TryFrom;
 
 #[derive(Debug)]
@@ -48,6 +48,12 @@ fn parse_single_move(
     let ((amt, dir, width), input) = parse_move_suffix(next_input);
     match width {
       Width::One => Ok((Some(Move::Slice(slice, amt, dir)), input)),
+      _ => Err(ParseError),
+    }
+  } else if let Ok(rotation) = Rotation::try_from(c) {
+    let ((amt, dir, width), input) = parse_move_suffix(next_input);
+    match width {
+      Width::One => Ok((Some(Move::Rotation(rotation, amt, dir)), input)),
       _ => Err(ParseError),
     }
   } else {
@@ -146,7 +152,7 @@ pub fn parse_alg(input: &str) -> Result<Alg, ParseError> {
 #[cfg(test)]
 mod tests {
   use super::*;
-  use {Amount::*, Direction::*, Face::*, Slice::*, Width::*};
+  use {Amount::*, Direction::*, Face::*, Rotation::*, Slice::*, Width::*};
 
   #[test]
   fn moves() {
@@ -212,6 +218,40 @@ mod tests {
 
       assert_eq!(
         Ok(Alg::Seq(vec![Move::Slice(s, Double, AntiClockwise)])),
+        parse_alg(&format!("{:?}2'", s))
+      );
+
+      assert_eq!(Err(ParseError), parse_alg(&format!("{:?}w", s)));
+    }
+
+    assert_eq!(
+      Ok(Alg::Seq(vec![Move::Rotation(
+        Rotation::X,
+        Single,
+        Clockwise
+      )])),
+      parse_alg("x")
+    );
+
+    let rotations = [X, Y, Z];
+    for &s in &rotations {
+      assert_eq!(
+        Ok(Alg::Seq(vec![Move::Rotation(s, Single, Clockwise)])),
+        parse_alg(&format!("{:?}", s))
+      );
+
+      assert_eq!(
+        Ok(Alg::Seq(vec![Move::Rotation(s, Single, AntiClockwise)])),
+        parse_alg(&format!("{:?}'", s))
+      );
+
+      assert_eq!(
+        Ok(Alg::Seq(vec![Move::Rotation(s, Double, Clockwise)])),
+        parse_alg(&format!("{:?}2", s))
+      );
+
+      assert_eq!(
+        Ok(Alg::Seq(vec![Move::Rotation(s, Double, AntiClockwise)])),
         parse_alg(&format!("{:?}2'", s))
       );
 

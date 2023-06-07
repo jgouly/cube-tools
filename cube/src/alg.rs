@@ -1,4 +1,4 @@
-use crate::{Face, Slice};
+use crate::{Face, Rotation, Slice};
 
 mod parser;
 pub use parser::parse_alg;
@@ -98,6 +98,7 @@ impl std::fmt::Display for Width {
 pub enum Move {
   Face(Face, Amount, Direction, Width),
   Slice(Slice, Amount, Direction),
+  Rotation(Rotation, Amount, Direction),
 }
 
 impl Move {
@@ -115,6 +116,7 @@ impl Move {
     match self {
       Move::Face(f, _, _, _) => *f,
       Move::Slice(_, _, _) => unreachable!(),
+      Move::Rotation(..) => unreachable!(),
     }
   }
 
@@ -130,6 +132,7 @@ impl Move {
     match self {
       Move::Face(_, a, _, _) => *a,
       Move::Slice(_, a, _) => *a,
+      Move::Rotation(_, a, _) => *a,
     }
   }
 
@@ -137,6 +140,7 @@ impl Move {
     match self {
       Move::Face(_, _, d, _) => *d,
       Move::Slice(_, _, d) => *d,
+      Move::Rotation(_, _, d) => *d,
     }
   }
 
@@ -146,6 +150,7 @@ impl Move {
         Move::Face(*f, *amt, dir.invert(), *width)
       }
       Move::Slice(s, amt, dir) => Move::Slice(*s, *amt, dir.invert()),
+      Move::Rotation(s, amt, dir) => Move::Rotation(*s, *amt, dir.invert()),
     }
   }
 
@@ -157,6 +162,7 @@ impl Move {
         true
       }
       (Move::Slice(s0, _, _), Move::Slice(s1, _, _)) if s0 == s1 => true,
+      (Move::Rotation(r0, _, _), Move::Rotation(r1, _, _)) if r0 == r1 => true,
       _ => false,
     }
   }
@@ -172,6 +178,7 @@ impl Move {
         match self {
           Move::Face(f, _, _, w) => Some(Some(Move::Face(*f, a, d, *w))),
           Move::Slice(s, _, _) => Some(Some(Move::Slice(*s, a, d))),
+          Move::Rotation(s, _, _) => Some(Some(Move::Rotation(*s, a, d))),
         }
       } else {
         Some(None)
@@ -189,6 +196,9 @@ impl std::fmt::Display for Move {
         write!(f, "{:?}{}{}{}", face, width, amt, dir)
       }
       Move::Slice(slice, amt, dir) => write!(f, "{:?}{}{}", slice, amt, dir),
+      Move::Rotation(rotation, amt, dir) => {
+        write!(f, "{:?}{}{}", rotation, amt, dir)
+      }
     }
   }
 }
@@ -357,6 +367,7 @@ mod tests {
     assert_eq!("M2", parse_alg("M2").unwrap().to_string());
     assert_eq!("S'", parse_alg("S'").unwrap().to_string());
     assert_eq!("Rw", parse_alg("Rw").unwrap().to_string());
+    assert_eq!("x y", parse_alg("x y").unwrap().to_string());
 
     assert_eq!("[R, U]", parse_alg("[R,U]").unwrap().to_string());
     assert_eq!("[D: U]", parse_alg("[ D   :U ]").unwrap().to_string());
@@ -400,6 +411,12 @@ mod tests {
 
     let alg = parse_alg("[F, R] [R, U]").unwrap();
     assert_eq!(parse_alg("[U, R] [R, F]").unwrap(), alg.invert());
+
+    let alg = parse_alg("S'").unwrap();
+    assert_eq!(parse_alg("S").unwrap(), alg.invert());
+
+    let alg = parse_alg("z").unwrap();
+    assert_eq!(parse_alg("z'").unwrap(), alg.invert());
   }
 
   #[test]
@@ -472,6 +489,7 @@ mod tests {
     assert_cancel!("R F L2 R", "R F L R L");
     assert_cancel!("", "L R L' R'");
     assert_cancel!("U2 D", "U D U");
+    assert_cancel!("x2", "x x");
 
     assert_eq!(
       parse_alg("R2' U R D R' U' R D' R").unwrap(),

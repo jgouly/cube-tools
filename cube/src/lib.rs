@@ -73,6 +73,37 @@ impl TryFrom<char> for Slice {
   }
 }
 
+/// Represents a rotation of a cube.
+#[derive(Clone, Copy, PartialEq)]
+pub enum Rotation {
+  X,
+  Y,
+  Z,
+}
+
+impl std::fmt::Debug for Rotation {
+  fn fmt(&self, f: &mut std::fmt::Formatter) -> std::fmt::Result {
+    match self {
+      Rotation::X => write!(f, "x"),
+      Rotation::Y => write!(f, "y"),
+      Rotation::Z => write!(f, "z"),
+    }
+  }
+}
+
+impl TryFrom<char> for Rotation {
+  type Error = ();
+
+  fn try_from(c: char) -> Result<Self, Self::Error> {
+    match c {
+      'x' => Ok(Rotation::X),
+      'y' => Ok(Rotation::Y),
+      'z' => Ok(Rotation::Z),
+      _ => Err(()),
+    }
+  }
+}
+
 /// Represents a particular centre position on a cube.
 #[derive(Clone, Copy, Debug)]
 enum CentrePos {
