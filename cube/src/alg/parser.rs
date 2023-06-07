@@ -74,8 +74,8 @@ fn parse_alg_inner(
     return Err(ParseError);
   }
 
-  match &input[0..1] {
-    "[" => {
+  match input.chars().next().unwrap() {
+    '[' => {
       let (c, input) = split_first(input).ok_or(ParseError)?;
       assert_eq!('[', c);
       let (a, input) = parse_alg_inner(input, EndOfInputMode::Separator)?;
@@ -107,7 +107,7 @@ fn parse_alg_inner(
 
         // If there is a '[', let it be parsed as another
         // part of an Alg::Compound.
-        if &input[0..1] == "[" {
+        if input.chars().next() == Some('[') {
           return None;
         }
 
@@ -373,5 +373,7 @@ mod tests {
     assert_eq!(Err(ParseError), parse_alg("[R, U"));
     assert_eq!(Err(ParseError), parse_alg("[R, U["));
     assert_eq!(Err(ParseError), parse_alg("[R] U]"));
+    assert_eq!(Err(ParseError), parse_alg("R’"));
+    assert_eq!(Err(ParseError), parse_alg("’"));
   }
 }
