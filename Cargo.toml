@@ -4,6 +4,7 @@ members = [
     "alg-list-gen",
     "alg-trainer",
     "bld-solver",
+    "cfop",
     "cube",
     "cycles",
     "kociemba",

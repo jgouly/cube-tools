@@ -29,11 +29,8 @@ dependencies = [
 name = "bld-solver"
 version = "0.1.0"
 dependencies = [
- "alg-list-gen",
  "cube",
  "cycles",
- "miniserde",
- "rand",
 ]
 
 [[package]]
@@ -47,6 +44,13 @@ name = "cfg-if"
 version = "1.0.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "baf1de4339761588bc0619e3cbc0120ee582ebb74b53b4efbf79117bd2da40fd"
+
+[[package]]
+name = "cfop"
+version = "0.1.0"
+dependencies = [
+ "cube",
+]
 
 [[package]]
 name = "cube"
@@ -195,14 +199,6 @@ name = "ryu"
 version = "1.0.18"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "f3cb5ba0dc43242ce17de99c180e96db90b235b8a9fdc9543c96d2209116bd9f"
-
-[[package]]
-name = "solver-2x2"
-version = "0.1.0"
-dependencies = [
- "cube",
- "rand",
-]
 
 [[package]]
 name = "syn"

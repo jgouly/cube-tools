@@ -154,6 +154,16 @@ impl StickerCube {
     unreachable!();
   }
 
+  pub fn position_of_corner(&self, c0: CornerPos) -> CornerPos {
+    for c1 in CornerPos::iter() {
+      if c0 == self.corner(c1) {
+        return c1;
+      }
+    }
+
+    unreachable!();
+  }
+
   fn sticker_to_face(&self, s: Sticker) -> Face {
     match s {
       _ if s == self[CentrePos::U] => Face::U,
