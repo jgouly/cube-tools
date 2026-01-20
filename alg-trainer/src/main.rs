@@ -119,7 +119,7 @@ fn main() -> Result<(), String> {
     .map_err(|_| String::from("invalid integer for N"))?;
 
   let words: HashMap<String, String> =
-    load_json_opt(&matches, "words", "words.json")?;
+    load_json_opt(&matches, "words", "words.json").unwrap_or_default();
 
   let letter_scheme: LetterScheme =
     load_json_opt(&matches, "scheme", "scheme.json")?;
