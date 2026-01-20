@@ -154,6 +154,21 @@ impl Move {
     }
   }
 
+  pub fn normalise_half_turn(&self) -> Move {
+    match self {
+      Move::Face(f, Amount::Double, _, w) => {
+        Move::Face(*f, Amount::Double, Direction::Clockwise, *w)
+      }
+      Move::Slice(s, Amount::Double, _) => {
+        Move::Slice(*s, Amount::Double, Direction::Clockwise)
+      }
+      Move::Rotation(r, Amount::Double, _) => {
+        Move::Rotation(*r, Amount::Double, Direction::Clockwise)
+      }
+      _ => self.clone(),
+    }
+  }
+
   fn is_same_movement(&self, m: &Move) -> bool {
     match (self, m) {
       (Move::Face(f0, _, _, w0), Move::Face(f1, _, _, w1))
@@ -259,6 +274,25 @@ impl Alg {
       }
       Alg::Comm(a, b) => Alg::Comm(b.clone(), a.clone()),
       Alg::Conj(a, b) => Alg::Conj(a.clone(), Box::new(b.invert())),
+    }
+  }
+
+  pub fn normalise_half_turns(&self) -> Alg {
+    match self {
+      Alg::Compound(algs) => {
+        Alg::Compound(algs.iter().map(|a| a.normalise_half_turns()).collect())
+      }
+      Alg::Seq(moves) => {
+        Alg::Seq(moves.iter().map(|m| m.normalise_half_turn()).collect())
+      }
+      Alg::Comm(a, b) => Alg::Comm(
+        Box::new(a.normalise_half_turns()),
+        Box::new(b.normalise_half_turns()),
+      ),
+      Alg::Conj(a, b) => Alg::Conj(
+        Box::new(a.normalise_half_turns()),
+        Box::new(b.normalise_half_turns()),
+      ),
     }
   }
 
@@ -417,6 +451,29 @@ mod tests {
 
     let alg = parse_alg("z").unwrap();
     assert_eq!(parse_alg("z'").unwrap(), alg.invert());
+  }
+
+  #[test]
+  fn normalise_half_turns() {
+    macro_rules! norm {
+      ($in:expr, $out:expr) => {
+        assert_eq!(
+          parse_alg($out).unwrap(),
+          parse_alg($in).unwrap().normalise_half_turns()
+        );
+      };
+    }
+
+    norm!("U2'", "U2");
+    norm!("F2'", "F2");
+    norm!("R2' U2'", "R2 U2");
+    norm!("M2'", "M2");
+    norm!("x2'", "x2");
+
+    norm!("R U2' R'", "R U2 R'");
+
+    norm!("[R2', U2']", "[R2, U2]");
+    norm!("[F: R2']", "[F: R2]");
   }
 
   #[test]
