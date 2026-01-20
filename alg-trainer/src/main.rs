@@ -13,7 +13,9 @@ fn read_alg_list(file: &str) -> Result<Vec<Alg>, String> {
 
   lines
     .filter_map(|l| {
-      let Ok(l) = l else { return Some(Err(String::from("IO error"))); };
+      let Ok(l) = l else {
+        return Some(Err(String::from("IO error")));
+      };
 
       if l.trim() == "" {
         return None;
