@@ -150,7 +150,7 @@ fn main() -> Result<(), String> {
       .map(|alg| alg.to_memo(&letter_scheme, &words))
       .collect();
 
-    println!("{}", k.solve(c).invert());
+    println!("{}", k.solve(c).invert().normalise_half_turns());
 
     println!("{}", memo.join("\n"));
 
